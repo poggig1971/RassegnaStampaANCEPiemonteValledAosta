@@ -1,16 +1,23 @@
 import streamlit as st
+import os
+from datetime import date
+from pathlib import Path
 
-# Credenziali base (da sostituire con login sicuro in futuro)
+# === CONFIGURAZIONE ===
+UPLOAD_DIR = "uploaded_pdfs"
+Path(UPLOAD_DIR).mkdir(exist_ok=True)
+
 USER_CREDENTIALS = {
     "Admin": "AncePiemonte",
     "U1": "P1"
 }
 
-# Sessione di login
+# === INIZIALIZZAZIONE SESSIONE ===
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.username = ""
 
+# === LOGIN ===
 def login():
     st.title("Accesso Rassegna Stampa")
     username = st.text_input("Nome utente", key="username_input")
@@ -23,32 +30,31 @@ def login():
         else:
             st.error("Credenziali non valide")
 
+# === DASHBOARD ===
 def dashboard():
-    st.title("Rassegna Stampa")
-    st.markdown("### Seleziona una sezione per visualizzare gli articoli")
+    st.title("Rassegna Stampa PDF")
+    oggi = date.today().strftime("%Y-%m-%d")
+    pdf_filename = f"{UPLOAD_DIR}/rassegna_{oggi}.pdf"
 
-    rassegna = {
-        "DICONO DI NOI": [
-            ("CORRIERE DELLA SERA", "«Città nel futuro» A ottobre a Roma la conferenza diretta da Rutelli", "Redazione"),
-            ("SOLE 24 ORE", "Città nel futuro 2030-50 «Priorità a casa e acqua»", "Redazione")
-        ],
-        "EDILIZIA / URBANISTICA": [
-            ("CORRIERE DELLA SERA", "Nagel: con il calo dei tassi Mps conviene ancora meno", "Daniela Polizzi"),
-            ("CORRIERE TORINO", "Negozi in vendita: 1.286 immobili passati di mano", "Nicolò Fagone La Zita")
-        ],
-        "OPERE PUBBLICHE": [
-            ("CORRIERE DELLA SERA", "Cdp fa utili record: 3,3 miliardi E Indica Giana per Autostrade", "Andrea Ducci"),
-            ("ITALIA OGGI", "Fincantieri in Albania", "Giovanni Galli")
-        ]
-    }
+    # Se Admin, consente caricamento
+    if st.session_state.username == "Admin":
+        st.subheader("Carica la rassegna stampa in PDF")
+        uploaded_file = st.file_uploader("Scegli un file PDF", type="pdf")
+        if uploaded_file:
+            with open(pdf_filename, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+            st.success(f"File caricato come: rassegna_{oggi}.pdf")
 
-    categoria = st.selectbox("Categoria", list(rassegna.keys()))
-    for testata, titolo, autore in rassegna[categoria]:
-        st.markdown(f"- **{testata}**: *{titolo}* — _{autore}_")
+    # Mostra il PDF se presente
+    if os.path.exists(pdf_filename):
+        st.subheader(f"Rassegna del giorno: {oggi}")
+        with open(pdf_filename, "rb") as f:
+            st.download_button(label="Scarica PDF", data=f, file_name=f"rassegna_{oggi}.pdf")
+        st.components.v1.iframe(src=pdf_filename, height=800)
+    else:
+        st.info("La rassegna di oggi non è ancora stata caricata.")
 
-    st.markdown("---")
-    st.markdown("Servizio a cura di **Telpress Italia S.r.l.**")
-
+# === MAIN ===
 def main():
     if not st.session_state.logged_in:
         login()
@@ -57,7 +63,6 @@ def main():
         if st.sidebar.button("Esci"):
             st.session_state.logged_in = False
             st.session_state.username = ""
-            # Nessun rerun, il logout sarà visibile al prossimo refresh automatico
         dashboard()
 
 main()
