@@ -62,7 +62,7 @@ def dashboard():
             if st.button("Elimina la rassegna di oggi"):
                 os.remove(pdf_filename)
                 st.success("Rassegna eliminata con successo.")
-                st.experimental_rerun()
+                st.rerun()
 
     # === VISUALIZZAZIONE PDF ===
     if os.path.exists(pdf_filename):
