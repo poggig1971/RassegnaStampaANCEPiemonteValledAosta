@@ -46,11 +46,14 @@ def dashboard():
             with open(pdf_filename, "wb") as f:
                 f.write(uploaded_file.getbuffer())
             st.success(f"File caricato come: rassegna_{oggi}.pdf")
-# Bottone per cancellare rassegna (solo per Admin)
-if st.session_state.username == "Admin" and os.path.exists(pdf_filename):
-    if st.button("Elimina la rassegna di oggi"):
-        os.remove(pdf_filename)
-        st.success("Rassegna eliminata con successo.")
+
+        # Bottone per cancellare rassegna (solo per Admin)
+        if os.path.exists(pdf_filename):
+            if st.button("Elimina la rassegna di oggi"):
+                os.remove(pdf_filename)
+                st.success("Rassegna eliminata con successo.")
+                st.experimental_rerun()
+
     # Mostra il PDF se presente
     if os.path.exists(pdf_filename):
         st.subheader(f"Rassegna del giorno: {oggi}")
