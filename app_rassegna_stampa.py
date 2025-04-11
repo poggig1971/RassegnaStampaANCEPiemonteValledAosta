@@ -2,8 +2,8 @@ import streamlit as st
 
 # Credenziali base (da sostituire con login sicuro in futuro)
 USER_CREDENTIALS = {
-    "admin": "AncePiemonte",
-    "utente": "CorsoDuca15"
+    "Admin": "AncePiemonte",
+    "U1": "CorsoDuca15"
 }
 
 # Sessione di login
@@ -57,7 +57,7 @@ def main():
         if st.sidebar.button("Esci"):
             st.session_state.logged_in = False
             st.session_state.username = ""
-            st.experimental_rerun()
+            # Nessun rerun, il logout sarà visibile al prossimo refresh automatico
         dashboard()
 
 main()
