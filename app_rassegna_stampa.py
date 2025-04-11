@@ -3,6 +3,7 @@ import os
 from datetime import date
 from pathlib import Path
 
+# === LOGO ===
 st.image("logo.png", width=200)
 
 # === CONFIGURAZIONE ===
@@ -10,8 +11,8 @@ UPLOAD_DIR = "uploaded_pdfs"
 Path(UPLOAD_DIR).mkdir(exist_ok=True)
 
 USER_CREDENTIALS = {
-    "A1": "A1",
-    "U1": "P1"
+    "A1": "A1",  # Admin
+    "U1": "P1"   # Utente semplice
 }
 
 # === INIZIALIZZAZIONE SESSIONE ===
@@ -38,7 +39,7 @@ def dashboard():
     oggi = date.today().strftime("%Y-%m-%d")
     pdf_filename = f"{UPLOAD_DIR}/rassegna_{oggi}.pdf"
 
-    # Se Admin, consente caricamento
+    # === AREA ADMIN ===
     if st.session_state.username == "A1":
         st.subheader("Carica la rassegna stampa in PDF")
         uploaded_file = st.file_uploader("Scegli un file PDF", type="pdf")
@@ -47,14 +48,14 @@ def dashboard():
                 f.write(uploaded_file.getbuffer())
             st.success(f"File caricato come: rassegna_{oggi}.pdf")
 
-        # Bottone per cancellare rassegna (solo per Admin)
+        # Pulsante per eliminare il file
         if os.path.exists(pdf_filename):
             if st.button("Elimina la rassegna di oggi"):
                 os.remove(pdf_filename)
                 st.success("Rassegna eliminata con successo.")
                 st.experimental_rerun()
 
-    # Mostra il PDF se presente
+    # === VISUALIZZAZIONE PDF ===
     if os.path.exists(pdf_filename):
         st.subheader(f"Rassegna del giorno: {oggi}")
         with open(pdf_filename, "rb") as f:
