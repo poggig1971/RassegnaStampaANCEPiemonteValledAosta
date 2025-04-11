@@ -3,7 +3,7 @@ import os
 from datetime import date
 from pathlib import Path
 
-st.image("IMG_8865.jpg", width=300)
+st.image("IMG_8865.jpg", width=200)
 
 # === CONFIGURAZIONE ===
 UPLOAD_DIR = "uploaded_pdfs"
