@@ -45,7 +45,7 @@ def show_pdf(file_path):
 # === DASHBOARD ===
 def dashboard():
     st.title("Rassegna Stampa PDF")
-    oggi = date.today().strftime("%Y-%m-%d")
+    oggi = date.today().strftime("%Y.%m.%d")
     pdf_filename = f"{UPLOAD_DIR}/rassegna_{oggi}.pdf"
 
     # === AREA ADMIN ===
@@ -56,6 +56,7 @@ def dashboard():
             with open(pdf_filename, "wb") as f:
                 f.write(uploaded_file.getbuffer())
             st.success(f"File caricato come: rassegna_{oggi}.pdf")
+            st.rerun()
 
         # Pulsante per eliminare il file
         if os.path.exists(pdf_filename):
@@ -64,14 +65,23 @@ def dashboard():
                 st.success("Rassegna eliminata con successo.")
                 st.rerun()
 
-    # === VISUALIZZAZIONE PDF ===
-    if os.path.exists(pdf_filename):
-        st.subheader(f"🔵  {oggi}")
-        with open(pdf_filename, "rb") as f:
-            st.download_button(label="Scarica PDF", data=f, file_name=f"rassegna_{oggi}.pdf")
-        show_pdf(pdf_filename)
+    # === MENU A TENDINA PER SELEZIONARE LA DATA ===
+    st.subheader("Seleziona una rassegna da visualizzare")
+    available_files = sorted(
+        [f for f in os.listdir(UPLOAD_DIR) if f.endswith(".pdf")],
+        reverse=True
+    )
+
+    if available_files:
+        date_options = [f.replace("rassegna_", "").replace(".pdf", "") for f in available_files]
+        selected_date = st.selectbox("Data disponibile", date_options)
+        selected_file = f"{UPLOAD_DIR}/rassegna_{selected_date}.pdf"
+
+        with open(selected_file, "rb") as f:
+            st.download_button(label=f"Scarica PDF del {selected_date}", data=f, file_name=f"rassegna_{selected_date}.pdf")
+        show_pdf(selected_file)
     else:
-        st.info("La rassegna di oggi non è ancora stata caricata.")
+        st.info("Nessuna rassegna disponibile al momento.")
 
 # === MAIN ===
 def main():
