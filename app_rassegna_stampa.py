@@ -29,8 +29,9 @@ def login():
 
     if st.button("Accedi"):
         if username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
-            st.session_state.logged_in = True
-            st.session_state.username = username
+    st.session_state.logged_in = True
+    st.session_state.username = username
+    st.experimental_rerun()
         else:
             st.error("Credenziali non valide")
 
