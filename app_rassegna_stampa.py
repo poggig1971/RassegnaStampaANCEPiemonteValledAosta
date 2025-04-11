@@ -1,4 +1,4 @@
-Carico: import streamlit as st
+import streamlit as st
 
 # Credenziali base (da sostituire con login sicuro in futuro)
 USER_CREDENTIALS = {
