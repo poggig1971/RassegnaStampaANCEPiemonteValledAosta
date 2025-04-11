@@ -2,6 +2,7 @@ import streamlit as st
 import os
 from datetime import date
 from pathlib import Path
+import base64
 
 # === LOGO ===
 st.image("logo.png", width=200)
@@ -33,6 +34,13 @@ def login():
         else:
             st.error("Credenziali non valide")
 
+# === VISUALIZZATORE PDF ===
+def show_pdf(file_path):
+    with open(file_path, "rb") as f:
+        base64_pdf = base64.b64encode(f.read()).decode("utf-8")
+    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800px" type="application/pdf"></iframe>'
+    st.markdown(pdf_display, unsafe_allow_html=True)
+
 # === DASHBOARD ===
 def dashboard():
     st.title("Rassegna Stampa PDF")
@@ -60,7 +68,7 @@ def dashboard():
         st.subheader(f"Rassegna del giorno: {oggi}")
         with open(pdf_filename, "rb") as f:
             st.download_button(label="Scarica PDF", data=f, file_name=f"rassegna_{oggi}.pdf")
-        st.components.v1.iframe(src=pdf_filename, height=800)
+        show_pdf(pdf_filename)
     else:
         st.info("La rassegna di oggi non è ancora stata caricata.")
 
