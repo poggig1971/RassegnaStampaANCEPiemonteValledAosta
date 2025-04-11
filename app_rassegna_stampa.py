@@ -13,14 +13,13 @@ if "logged_in" not in st.session_state:
 
 def login():
     st.title("Accesso Rassegna Stampa")
-    username = st.text_input("Nome utente")
-    password = st.text_input("Password", type="password")
+    username = st.text_input("Nome utente", key="username_input")
+    password = st.text_input("Password", type="password", key="password_input")
+
     if st.button("Accedi"):
         if username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
             st.session_state.logged_in = True
             st.session_state.username = username
-            st.success("Accesso effettuato con successo!")
-            st.experimental_rerun()
         else:
             st.error("Credenziali non valide")
 
