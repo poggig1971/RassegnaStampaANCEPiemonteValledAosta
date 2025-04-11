@@ -28,12 +28,12 @@ def login():
     password = st.text_input("Password", type="password", key="password_input")
 
     if st.button("Accedi"):
-    if username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
-        st.session_state.logged_in = True
-        st.session_state.username = username
-        st.experimental_rerun()
-    else:
-        st.error("Credenziali non valide")
+        if username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
+            st.session_state.logged_in = True
+            st.session_state.username = username
+            st.experimental_rerun()
+        else:
+            st.error("Credenziali non valide")
 
 # === VISUALIZZATORE PDF ===
 def show_pdf(file_path):
