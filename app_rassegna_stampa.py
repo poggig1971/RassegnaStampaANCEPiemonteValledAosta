@@ -10,7 +10,7 @@ UPLOAD_DIR = "uploaded_pdfs"
 Path(UPLOAD_DIR).mkdir(exist_ok=True)
 
 USER_CREDENTIALS = {
-    "Admin": "AncePiemonte",
+    "A1": "A1",
     "U1": "P1"
 }
 
@@ -39,7 +39,7 @@ def dashboard():
     pdf_filename = f"{UPLOAD_DIR}/rassegna_{oggi}.pdf"
 
     # Se Admin, consente caricamento
-    if st.session_state.username == "Admin":
+    if st.session_state.username == "A1":
         st.subheader("Carica la rassegna stampa in PDF")
         uploaded_file = st.file_uploader("Scegli un file PDF", type="pdf")
         if uploaded_file:
