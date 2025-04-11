@@ -3,7 +3,7 @@ import os
 from datetime import date
 from pathlib import Path
 
-st.image("IMG_8865.jpeg", width=200)
+st.image("loto.png", width=200)
 
 # === CONFIGURAZIONE ===
 UPLOAD_DIR = "uploaded_pdfs"
@@ -46,7 +46,11 @@ def dashboard():
             with open(pdf_filename, "wb") as f:
                 f.write(uploaded_file.getbuffer())
             st.success(f"File caricato come: rassegna_{oggi}.pdf")
-
+# Bottone per cancellare rassegna (solo per Admin)
+if st.session_state.username == "Admin" and os.path.exists(pdf_filename):
+    if st.button("Elimina la rassegna di oggi"):
+        os.remove(pdf_filename)
+        st.success("Rassegna eliminata con successo.")
     # Mostra il PDF se presente
     if os.path.exists(pdf_filename):
         st.subheader(f"Rassegna del giorno: {oggi}")
