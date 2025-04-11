@@ -3,7 +3,7 @@ import streamlit as st
 # Credenziali base (da sostituire con login sicuro in futuro)
 USER_CREDENTIALS = {
     "Admin": "AncePiemonte",
-    "U1": "CorsoDuca15"
+    "U1": "P1"
 }
 
 # Sessione di login
