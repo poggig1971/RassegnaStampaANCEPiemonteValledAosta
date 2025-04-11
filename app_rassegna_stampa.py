@@ -65,7 +65,7 @@ def dashboard():
 
     # === VISUALIZZAZIONE PDF ===
     if os.path.exists(pdf_filename):
-        st.subheader(f"Rassegna del giorno: {oggi}")
+        st.subheader(f"🔵: {oggi}")
         with open(pdf_filename, "rb") as f:
             st.download_button(label="Scarica PDF", data=f, file_name=f"rassegna_{oggi}.pdf")
         show_pdf(pdf_filename)
