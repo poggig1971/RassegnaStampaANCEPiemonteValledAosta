@@ -67,11 +67,13 @@ def dashboard():
             st.success(f"Cartella '{FOLDER_NAME}' pronta su Google Drive!")
 
     try:
-        service = get_drive_service()
-        folder_id = get_or_create_folder(service, FOLDER_NAME)
-    except Exception as e:
-        st.error("⚠️ Errore nella connessione a Google Drive. Clicca 'Connetti a Google Drive' se non l'hai ancora fatto.")
-        return
+    service = get_drive_service()
+    folder_id = get_or_create_folder(service, FOLDER_NAME)
+    files = list_pdfs_in_folder(service, folder_id)
+except Exception as e:
+    st.error("⚠️ Errore nella connessione a Google Drive. Clicca 'Connetti a Google Drive' se non l'hai ancora fatto.")
+    return
+
 
     if st.session_state.username == "A1":
         st.subheader("Carica la rassegna stampa in PDF")
