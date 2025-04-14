@@ -1,2 +1,4 @@
-client_secret.json
-token_drive.pkl
+*.pkl
+.streamlit/client_secret.json
+temp_pdfs/
+__pycache__/
