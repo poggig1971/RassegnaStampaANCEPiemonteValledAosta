@@ -11,21 +11,39 @@ SCOPES = ['https://www.googleapis.com/auth/drive.file']
 TOKEN_PATH = 'token_drive.pkl'
 FOLDER_NAME = 'Rassegna ANCE'
 
+
 def authenticate():
     creds = None
     if os.path.exists(TOKEN_PATH):
         with open(TOKEN_PATH, 'rb') as token:
             creds = pickle.load(token)
+
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file('.streamlit/client_secret.json', SCOPES)
-            creds = flow.run_local_server(port=0)
+            auth_url, _ = flow.authorization_url(prompt='consent')
 
-        with open(TOKEN_PATH, 'wb') as token:
-            pickle.dump(creds, token)
+            st.warning("🔐 Autenticazione richiesta")
+            st.markdown(f"[Clicca qui per autorizzare l'accesso a Google Drive]({auth_url})")
+            auth_code = st.text_input("Inserisci il codice di autorizzazione", type="default")
+
+            if st.button("Conferma codice"):
+                try:
+                    flow.fetch_token(code=auth_code)
+                    creds = flow.credentials
+                    with open(TOKEN_PATH, 'wb') as token:
+                        pickle.dump(creds, token)
+                    st.success("✅ Autenticazione completata con successo. Ricarica l'app.")
+                    st.stop()
+                except Exception as e:
+                    st.error(f"Errore durante l'autenticazione: {e}")
+                    st.stop()
+            else:
+                st.stop()
     return creds
+
 
 def get_drive_service():
     creds = authenticate()
