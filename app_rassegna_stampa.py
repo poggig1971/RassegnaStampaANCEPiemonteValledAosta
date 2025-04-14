@@ -64,6 +64,23 @@ def log_visualizzazione(username, filename):
             writer.writerow(["data", "ora", "utente", "file"])
         writer.writerow([data, ora, username, filename])
 
+    # === Upload su Google Drive ===
+    try:
+        service = get_drive_service()
+        folder_id = get_or_create_folder(service, FOLDER_NAME)
+
+        # Elimina eventuale versione precedente del log
+        existing_files = list_pdfs_in_folder(service, folder_id)
+        for f in existing_files:
+            if f["name"] == "log_visualizzazioni.csv":
+                service.files().delete(fileId=f["id"]).execute()
+
+        # Carica il log aggiornato
+        upload_pdf_to_drive(service, folder_id, log_path, "log_visualizzazioni.csv")
+
+    except Exception as e:
+        st.warning(f"⚠️ Impossibile caricare il log su Drive: {e}")
+
 def dashboard():
     st.title("Rassegna Stampa PDF")
     oggi = date.today().strftime("%Y.%m.%d")
