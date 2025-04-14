@@ -1,4 +1,3 @@
-
 import streamlit as st
 import os
 import base64
@@ -60,27 +59,20 @@ def dashboard():
     st.title("Rassegna Stampa PDF")
     oggi = date.today().strftime("%Y.%m.%d")
 
-    if st.session_state.username == "A1":
-        if st.button("🔗 Connetti a Google Drive"):
-            service = get_drive_service()
-            folder_id = get_or_create_folder(service, FOLDER_NAME)
-            st.success(f"Cartella '{FOLDER_NAME}' pronta su Google Drive!")
-
     try:
-    service = get_drive_service()
-    folder_id = get_or_create_folder(service, FOLDER_NAME)
-    files = list_pdfs_in_folder(service, folder_id)
-except Exception as e:
-    st.error("⚠️ Errore nella connessione a Google Drive. Clicca 'Connetti a Google Drive' se non l'hai ancora fatto.")
-    return
-
+        service = get_drive_service()
+        folder_id = get_or_create_folder(service, FOLDER_NAME)
+        files = list_pdfs_in_folder(service, folder_id)
+    except Exception as e:
+        st.error("⚠️ Errore nella connessione a Google Drive. Clicca 'Connetti a Google Drive' se non l'hai ancora fatto.")
+        return
 
     if st.session_state.username == "A1":
         st.subheader("Carica la rassegna stampa in PDF")
         uploaded_files = st.file_uploader("Scegli uno o più file PDF", type="pdf", accept_multiple_files=True)
 
         if uploaded_files:
-            existing_filenames = [f["name"] for f in list_pdfs_in_folder(service, folder_id)]
+            existing_filenames = [f["name"] for f in files]
 
             for uploaded_file in uploaded_files:
                 filename = uploaded_file.name
@@ -97,23 +89,20 @@ except Exception as e:
             st.rerun()
 
     st.subheader("Archivio Rassegne")
-    files = list_pdfs_in_folder(service, folder_id)
-if files:
-    date_options = [f["name"].replace(".pdf", "") for f in files if f["name"].endswith(".pdf")]
-    selected_date = st.selectbox("Seleziona una data", date_options)
-    selected_file = f"{selected_date}.pdf"
-    file_id = next((f["id"] for f in files if f["name"] == selected_file), None)
-    selected_local_path = os.path.join(TEMP_DIR, selected_file)
+    if files:
+        date_options = [f["name"].replace(".pdf", "") for f in files if f["name"].endswith(".pdf")]
+        selected_date = st.selectbox("Seleziona una data", date_options)
+        selected_file = f"{selected_date}.pdf"
+        file_id = next((f["id"] for f in files if f["name"] == selected_file), None)
+        selected_local_path = os.path.join(TEMP_DIR, selected_file)
 
-    if file_id:
-        download_pdf(service, file_id, selected_local_path)
-
-        with open(selected_local_path, "rb") as f:
-            st.download_button(f"Scarica rassegna {selected_date}", data=f, file_name=selected_file)
-
-        show_pdf(selected_local_path)
-else:
-    st.info("Nessun file PDF trovato su Google Drive.")
+        if file_id:
+            download_pdf(service, file_id, selected_local_path)
+            with open(selected_local_path, "rb") as f:
+                st.download_button(f"Scarica rassegna {selected_date}", data=f, file_name=selected_file)
+            show_pdf(selected_local_path)
+    else:
+        st.info("Nessun file PDF trovato su Google Drive.")
 
 def main():
     if not st.session_state.logged_in:
