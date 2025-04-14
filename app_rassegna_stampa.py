@@ -49,11 +49,6 @@ def login():
         else:
             st.error("Credenziali non valide")
 
-def show_pdf(file_path):
-    with open(file_path, "rb") as f:
-        base64_pdf = base64.b64encode(f.read()).decode("utf-8")
-    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800px"></iframe>'
-    st.markdown(pdf_display, unsafe_allow_html=True)
 
 def dashboard():
     st.title("Rassegna Stampa PDF")
@@ -100,7 +95,7 @@ def dashboard():
             download_pdf(service, file_id, selected_local_path)
             with open(selected_local_path, "rb") as f:
                 st.download_button(f"Scarica rassegna {selected_date}", data=f, file_name=selected_file)
-            show_pdf(selected_local_path)
+        
     else:
         st.info("Nessun file PDF trovato su Google Drive.")
 
