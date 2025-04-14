@@ -22,24 +22,22 @@ Path(TEMP_DIR).mkdir(exist_ok=True)
 
 USER_CREDENTIALS = {
     "A1": "A1",
-    "U1": "P1"
-    "U2": "P2"
-    "U3": "P3"
-"U4": "P4"
-"U5": "P5"
-"U6": "P6"
-"U7": "P7"
-"U8": "P8"
-"U9": "P9"
-"U10": "P10"
+    "U1": "P1",
+    "U2": "P2",
+    "U3": "P3",
+    "U4": "P4",
+    "U5": "P5",
+    "U6": "P6",
+    "U7": "P7",
+    "U8": "P8",
+    "U9": "P9",
+    "U10": "P10"
 }
 
-# === INIZIALIZZAZIONE SESSIONE ===
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.username = ""
 
-# === LOGIN ===
 def login():
     st.title("Accesso Rassegna Stampa")
     username = st.text_input("Nome utente", key="username_input")
@@ -52,22 +50,32 @@ def login():
         else:
             st.error("Credenziali non valide")
 
-# === VISUALIZZATORE PDF ===
 def show_pdf(file_path):
     with open(file_path, "rb") as f:
         base64_pdf = base64.b64encode(f.read()).decode("utf-8")
     pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800px" type="application/pdf"></iframe>'
     st.markdown(pdf_display, unsafe_allow_html=True)
 
-# === DASHBOARD ===
 def dashboard():
     st.title("Rassegna Stampa PDF")
     oggi = date.today().strftime("%Y.%m.%d")
     pdf_filename = f"rassegna_{oggi}.pdf"
     local_path = os.path.join(TEMP_DIR, pdf_filename)
 
-    service = get_drive_service()
-    folder_id = get_or_create_folder(service, FOLDER_NAME)
+    # === Solo per ADMIN: pulsante per connettere Drive ===
+    if st.session_state.username == "A1":
+        if st.button("🔗 Connetti a Google Drive"):
+            service = get_drive_service()
+            folder_id = get_or_create_folder(service, FOLDER_NAME)
+            st.success(f"Cartella '{FOLDER_NAME}' pronta su Google Drive!")
+
+    # === Prosegui solo se connesso ===
+    try:
+        service = get_drive_service()
+        folder_id = get_or_create_folder(service, FOLDER_NAME)
+    except Exception as e:
+        st.error("⚠️ Errore nella connessione a Google Drive. Clicca 'Connetti a Google Drive' se non l'hai ancora fatto.")
+        return
 
     # === AREA ADMIN ===
     if st.session_state.username == "A1":
@@ -97,7 +105,6 @@ def dashboard():
     else:
         st.info("Nessun file PDF trovato su Google Drive.")
 
-# === MAIN ===
 def main():
     if not st.session_state.logged_in:
         login()
