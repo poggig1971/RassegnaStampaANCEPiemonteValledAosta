@@ -97,9 +97,9 @@ def dashboard():
     st.subheader("Archivio Rassegne")
     files = list_pdfs_in_folder(service, folder_id)
     if files:
-        date_options = [f["name"].replace("rassegna_", "").replace(".pdf", "") for f in files]
+        date_options = [f["name"].replace(".pdf", "") for f in files if f["name"].endswith(".pdf")]
         selected_date = st.selectbox("Seleziona una data", date_options)
-        selected_file = f"rassegna_{selected_date}.pdf"
+        selected_file = f"{selected_date}.pdf"
         file_id = next((f["id"] for f in files if f["name"] == selected_file), None)
         selected_local_path = os.path.join(TEMP_DIR, selected_file)
         if file_id:
