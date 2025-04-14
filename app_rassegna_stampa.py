@@ -1,8 +1,10 @@
 import streamlit as st
 import os
 import base64
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
+import csv
+
 from drive_utils import (
     get_drive_service,
     get_or_create_folder,
@@ -49,6 +51,18 @@ def login():
         else:
             st.error("Credenziali non valide")
 
+def log_visualizzazione(username, filename):
+    log_path = "log_visualizzazioni.csv"
+    now = datetime.now()
+    data = now.strftime("%Y-%m-%d")
+    ora = now.strftime("%H:%M:%S")
+
+    file_exists = os.path.exists(log_path)
+    with open(log_path, mode="a", newline="") as csvfile:
+        writer = csv.writer(csvfile)
+        if not file_exists:
+            writer.writerow(["data", "ora", "utente", "file"])
+        writer.writerow([data, ora, username, filename])
 
 def dashboard():
     st.title("Rassegna Stampa PDF")
@@ -95,7 +109,7 @@ def dashboard():
             download_pdf(service, file_id, selected_local_path)
             with open(selected_local_path, "rb") as f:
                 st.download_button(f"Scarica rassegna {selected_date}", data=f, file_name=selected_file)
-        
+                log_visualizzazione(st.session_state.username, selected_file)
     else:
         st.info("Nessun file PDF trovato su Google Drive.")
 
