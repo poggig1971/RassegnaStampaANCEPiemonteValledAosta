@@ -1,4 +1,4 @@
 *.pkl
-.streamlit/client_secret.json
+
 temp_pdfs/
 __pycache__/
