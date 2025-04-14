@@ -4,6 +4,7 @@ import base64
 from datetime import date, datetime
 from pathlib import Path
 import csv
+import pytz
 
 from drive_utils import (
     get_drive_service,
@@ -53,7 +54,8 @@ def login():
 
 def log_visualizzazione(username, filename):
     log_path = "log_visualizzazioni.csv"
-    now = datetime.now()
+    tz = pytz.timezone("Europe/Rome")
+    now = datetime.now(tz)
     data = now.strftime("%Y-%m-%d")
     ora = now.strftime("%H:%M:%S")
 
@@ -69,13 +71,13 @@ def log_visualizzazione(username, filename):
         service = get_drive_service()
         folder_id = get_or_create_folder(service, FOLDER_NAME)
 
-        # Elimina eventuale versione precedente del log
+        # Elimina vecchio log se esiste
         existing_files = list_pdfs_in_folder(service, folder_id)
         for f in existing_files:
             if f["name"] == "log_visualizzazioni.csv":
                 service.files().delete(fileId=f["id"]).execute()
 
-        # Carica il log aggiornato
+        # Carica nuovo log
         upload_pdf_to_drive(service, folder_id, log_path, "log_visualizzazioni.csv")
 
     except Exception as e:
