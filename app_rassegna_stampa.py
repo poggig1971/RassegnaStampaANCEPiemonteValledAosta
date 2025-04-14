@@ -1,4 +1,3 @@
-# app_rassegna_stampa.py
 
 import streamlit as st
 import os
@@ -54,23 +53,19 @@ def login():
 def show_pdf(file_path):
     with open(file_path, "rb") as f:
         base64_pdf = base64.b64encode(f.read()).decode("utf-8")
-    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800px" type="application/pdf"></iframe>'
+    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800px"></iframe>'
     st.markdown(pdf_display, unsafe_allow_html=True)
 
 def dashboard():
     st.title("Rassegna Stampa PDF")
     oggi = date.today().strftime("%Y.%m.%d")
-    pdf_filename = f"rassegna_{oggi}.pdf"
-    local_path = os.path.join(TEMP_DIR, pdf_filename)
 
-    # === Solo per ADMIN: pulsante per connettere Drive ===
     if st.session_state.username == "A1":
         if st.button("🔗 Connetti a Google Drive"):
             service = get_drive_service()
             folder_id = get_or_create_folder(service, FOLDER_NAME)
             st.success(f"Cartella '{FOLDER_NAME}' pronta su Google Drive!")
 
-    # === Prosegui solo se connesso ===
     try:
         service = get_drive_service()
         folder_id = get_or_create_folder(service, FOLDER_NAME)
@@ -78,18 +73,27 @@ def dashboard():
         st.error("⚠️ Errore nella connessione a Google Drive. Clicca 'Connetti a Google Drive' se non l'hai ancora fatto.")
         return
 
-    # === AREA ADMIN ===
     if st.session_state.username == "A1":
         st.subheader("Carica la rassegna stampa in PDF")
-        uploaded_file = st.file_uploader("Scegli un file PDF", type="pdf")
-        if uploaded_file:
-            with open(local_path, "wb") as f:
-                f.write(uploaded_file.getbuffer())
-            upload_pdf_to_drive(service, folder_id, local_path, pdf_filename)
-            st.success(f"File caricato su Google Drive come: {pdf_filename}")
+        uploaded_files = st.file_uploader("Scegli uno o più file PDF", type="pdf", accept_multiple_files=True)
+
+        if uploaded_files:
+            existing_filenames = [f["name"] for f in list_pdfs_in_folder(service, folder_id)]
+
+            for uploaded_file in uploaded_files:
+                filename = uploaded_file.name
+                local_path = os.path.join(TEMP_DIR, filename)
+
+                if filename in existing_filenames:
+                    st.warning(f"❗ Il file '{filename}' è già presente su Drive.")
+                    continue
+
+                with open(local_path, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
+                upload_pdf_to_drive(service, folder_id, local_path, filename)
+                st.success(f"✅ Caricato: {filename}")
             st.rerun()
 
-    # === LISTA FILE PDF ===
     st.subheader("Archivio Rassegne")
     files = list_pdfs_in_folder(service, folder_id)
     if files:
