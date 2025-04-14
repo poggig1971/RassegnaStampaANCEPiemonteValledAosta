@@ -46,7 +46,7 @@ def show_pdf(file_path):
 def dashboard():
     st.title("Rassegna Stampa PDF")
     oggi = date.today().strftime("%Y.%m.%d")
-    pdf_filename = f"{UPLOAD_DIR}/rassegna_{oggi}.pdf"
+        pdf_filename = f"{UPLOAD_DIR}/rassegna_{oggi}.pdf"
 
     # === AREA ADMIN ===
     if st.session_state.username == "A1":
