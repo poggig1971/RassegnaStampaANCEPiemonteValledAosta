@@ -1,19 +1,37 @@
+
 import streamlit as st
 import os
+import base64
 from datetime import date
 from pathlib import Path
-import base64
+from drive_utils import (
+    get_drive_service,
+    get_or_create_folder,
+    upload_pdf_to_drive,
+    list_pdfs_in_folder,
+    download_pdf,
+    FOLDER_NAME
+)
 
 # === LOGO ===
 st.image("logo.png", width=200)
 
 # === CONFIGURAZIONE ===
-UPLOAD_DIR = "uploaded_pdfs"
-Path(UPLOAD_DIR).mkdir(exist_ok=True)
+TEMP_DIR = "temp_pdfs"
+Path(TEMP_DIR).mkdir(exist_ok=True)
 
 USER_CREDENTIALS = {
-    "A1": "A1",  # Admin
-    "U1": "P1"   # Utente semplice
+    "A1": "A1",
+    "U1": "P1"
+    "U2": "P2"
+    "U3": "P3"
+"U4": "P4"
+"U5": "P5"
+"U6": "P6"
+"U7": "P7"
+"U8": "P8"
+"U9": "P9"
+"U10": "P10"
 }
 
 # === INIZIALIZZAZIONE SESSIONE ===
@@ -26,7 +44,6 @@ def login():
     st.title("Accesso Rassegna Stampa")
     username = st.text_input("Nome utente", key="username_input")
     password = st.text_input("Password", type="password", key="password_input")
-
     if st.button("Accedi"):
         if username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
             st.session_state.logged_in = True
@@ -46,42 +63,39 @@ def show_pdf(file_path):
 def dashboard():
     st.title("Rassegna Stampa PDF")
     oggi = date.today().strftime("%Y.%m.%d")
-        pdf_filename = f"{UPLOAD_DIR}/rassegna_{oggi}.pdf"
+    pdf_filename = f"rassegna_{oggi}.pdf"
+    local_path = os.path.join(TEMP_DIR, pdf_filename)
+
+    service = get_drive_service()
+    folder_id = get_or_create_folder(service, FOLDER_NAME)
 
     # === AREA ADMIN ===
     if st.session_state.username == "A1":
         st.subheader("Carica la rassegna stampa in PDF")
         uploaded_file = st.file_uploader("Scegli un file PDF", type="pdf")
         if uploaded_file:
-            with open(pdf_filename, "wb") as f:
+            with open(local_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
-            st.success(f"File caricato come: rassegna_{oggi}.pdf")
+            upload_pdf_to_drive(service, folder_id, local_path, pdf_filename)
+            st.success(f"File caricato su Google Drive come: {pdf_filename}")
             st.rerun()
 
-        # Pulsante per eliminare il file
-        if os.path.exists(pdf_filename):
-            if st.button("Elimina la rassegna di oggi"):
-                os.remove(pdf_filename)
-                st.success("Rassegna eliminata con successo.")
-                st.rerun()
-
-    # === MENU A TENDINA PER SELEZIONARE LA DATA ===
-    st.subheader("Seleziona una rassegna da visualizzare")
-    available_files = sorted(
-        [f for f in os.listdir(UPLOAD_DIR) if f.endswith(".pdf")],
-        reverse=True
-    )
-
-    if available_files:
-        date_options = [f.replace("rassegna_", "").replace(".pdf", "") for f in available_files]
-        selected_date = st.selectbox("Data disponibile", date_options)
-        selected_file = f"{UPLOAD_DIR}/rassegna_{selected_date}.pdf"
-
-        with open(selected_file, "rb") as f:
-            st.download_button(label=f"Scarica PDF del {selected_date}", data=f, file_name=f"rassegna_{selected_date}.pdf")
-        show_pdf(selected_file)
+    # === LISTA FILE PDF ===
+    st.subheader("Archivio Rassegne")
+    files = list_pdfs_in_folder(service, folder_id)
+    if files:
+        date_options = [f["name"].replace("rassegna_", "").replace(".pdf", "") for f in files]
+        selected_date = st.selectbox("Seleziona una data", date_options)
+        selected_file = f"rassegna_{selected_date}.pdf"
+        file_id = next((f["id"] for f in files if f["name"] == selected_file), None)
+        selected_local_path = os.path.join(TEMP_DIR, selected_file)
+        if file_id:
+            download_pdf(service, file_id, selected_local_path)
+            with open(selected_local_path, "rb") as f:
+                st.download_button(f"Scarica rassegna {selected_date}", data=f, file_name=selected_file)
+            show_pdf(selected_local_path)
     else:
-        st.info("Nessuna rassegna disponibile al momento.")
+        st.info("Nessun file PDF trovato su Google Drive.")
 
 # === MAIN ===
 def main():
