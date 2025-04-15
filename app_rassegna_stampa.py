@@ -24,29 +24,7 @@ st.image("logo.png", width=200)
 TEMP_DIR = "temp_pdfs"
 Path(TEMP_DIR).mkdir(exist_ok=True)
 
-from streamlit_javascript import st_javascript
 
-def is_mobile():
-    user_agent = st_javascript("navigator.userAgent")
-    
-    # Se l'user agent non è ancora disponibile, mostra messaggio neutro
-    if user_agent is None or user_agent.strip() == "":
-        st.info("🔄 Attendere... rilevamento dispositivo in corso.")
-        st.stop()
-
-    user_agent = user_agent.lower()
-    return any(device in user_agent for device in ["iphone", "android", "ipad"])
-    
-if not is_mobile():
-    st.error("⚠️ Questa applicazione è disponibile solo da smartphone.")
-    st.markdown("""
-        <p style="font-size: 18px; color: #444;">
-            Per accedere alla rassegna stampa da desktop, usa il tuo smartphone.<br>
-            Oppure scansiona questo QR code:
-        </p>
-        <img src="https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=https://ancepiemonte.streamlit.app" width="200">
-    """, unsafe_allow_html=True)
-    st.stop()
 
 USER_CREDENTIALS = {
     "A1": "A1",
