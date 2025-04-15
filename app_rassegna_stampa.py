@@ -24,7 +24,7 @@ st.image("logo.png", width=200)
 TEMP_DIR = "temp_pdfs"
 Path(TEMP_DIR).mkdir(exist_ok=True)
 
-dfrom streamlit_javascript import st_javascript
+from streamlit_javascript import st_javascript
 
 def is_mobile():
     user_agent = st_javascript("navigator.userAgent")
