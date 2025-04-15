@@ -5,7 +5,16 @@ from datetime import date, datetime
 from pathlib import Path
 import csv
 import pytz
+import streamlit as st
 
+def is_mobile():
+    user_agent = st.request_headers.get("user-agent", "").lower()
+    return any(x in user_agent for x in ["iphone", "android", "ipad"])
+
+if not is_mobile():
+    st.warning("L'app è accessibile solo da smartphone. Usa un telefono per continuare.")
+    st.stop()
+    
 from drive_utils import (
     get_drive_service,
     get_or_create_folder,
