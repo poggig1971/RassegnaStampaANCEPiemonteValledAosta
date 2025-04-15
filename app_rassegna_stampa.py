@@ -7,6 +7,8 @@ import csv
 import pytz
 import streamlit as st
 
+from streamlit_useragent import get_user_agent
+
 def is_mobile():
     user_agent = st.request_headers.get("user-agent", "").lower()
     return any(x in user_agent for x in ["iphone", "android", "ipad"])
