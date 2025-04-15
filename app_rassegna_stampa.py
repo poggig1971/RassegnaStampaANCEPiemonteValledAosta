@@ -7,14 +7,11 @@ import csv
 import pytz
 import streamlit as st
 
-from streamlit_useragent import get_user_agent
-
 def is_mobile():
-    user_agent = st.request_headers.get("user-agent", "").lower()
-    return any(x in user_agent for x in ["iphone", "android", "ipad"])
-
-if not is_mobile():
-    st.warning("L'app è accessibile solo da smartphone. Usa un telefono per continuare.")
+    ua = get_user_agent()
+    return "mobile" in ua.device.lower()
+ if not is_mobile():
+    st.error("⚠️ Questa applicazione è disponibile solo da smartphone.")
     st.stop()
     
 from drive_utils import (
