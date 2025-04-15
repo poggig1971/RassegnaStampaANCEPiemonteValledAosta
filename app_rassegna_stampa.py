@@ -5,9 +5,7 @@ from datetime import date, datetime
 from pathlib import Path
 import csv
 import pytz
-import streamlit as st
 
-    
 from drive_utils import (
     get_drive_service,
     get_or_create_folder,
@@ -23,8 +21,6 @@ st.image("logo.png", width=200)
 # === CONFIGURAZIONE ===
 TEMP_DIR = "temp_pdfs"
 Path(TEMP_DIR).mkdir(exist_ok=True)
-
-
 
 USER_CREDENTIALS = {
     "A1": "A1",
