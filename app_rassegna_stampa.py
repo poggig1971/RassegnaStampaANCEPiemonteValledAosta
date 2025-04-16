@@ -5,7 +5,6 @@ from datetime import date, datetime
 from pathlib import Path
 import csv
 import pytz
-import pickle
 
 from drive_utils import (
     get_drive_service,
@@ -21,11 +20,8 @@ col1, col2 = st.columns([3, 5])
 with col1:
     st.image("logo.png", width=300)
 
-
 TEMP_DIR = "temp_pdfs"
 Path(TEMP_DIR).mkdir(exist_ok=True)
-
-AUTH_CACHE = "auth_cache.pkl"
 
 USER_CREDENTIALS = {
     "Admin": "CorsoDuca15",
@@ -51,30 +47,13 @@ if "logged_files" not in st.session_state:
 def login():
     st.markdown("## 🔐 Accesso alla Rassegna Stampa")
 
-    if os.path.exists(AUTH_CACHE):
-        with open(AUTH_CACHE, "rb") as f:
-            saved = pickle.load(f)
-            username, password = saved.get("username"), saved.get("password")
-            if username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
-                st.session_state.logged_in = True
-                st.session_state.username = username
-                st.success(f"✅ Login automatico come **{username}**")
-                st.rerun()
-                return
-
     username = st.text_input("👤 Nome utente", key="username_input")
     password = st.text_input("🔑 Password", type="password", key="password_input")
-    remember = st.checkbox("💾 Ricorda su questo PC")
 
     if st.button("Accedi"):
         if username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
             st.session_state.logged_in = True
             st.session_state.username = username
-
-            if remember:
-                with open(AUTH_CACHE, "wb") as f:
-                    pickle.dump({"username": username, "password": password}, f)
-
             st.success("✅ Accesso effettuato")
             st.rerun()
         else:
@@ -202,11 +181,6 @@ def main():
             st.markdown(f"👤 Utente: **{st.session_state.username}**")
             st.write("---")
             if st.button("🚪 Esci"):
-                st.session_state.clear()
-                st.rerun()
-            if st.button("🧹 Esci e dimentica"):
-                if os.path.exists(AUTH_CACHE):
-                    os.remove(AUTH_CACHE)
                 st.session_state.clear()
                 st.rerun()
         dashboard()
