@@ -19,16 +19,16 @@ TEMP_DIR = "temp_pdfs"
 Path(TEMP_DIR).mkdir(exist_ok=True)
 
 USER_CREDENTIALS = {
+    "Torino": "Torino",
+    "Alessandria": "Alessandria",
+    "Asti": "Asti",
+    "Cuneo": "Cuneo",
+    "Novara": "Novara",
+    "Vercelli": "Vercelli",
+    "Biella": "Biella",
+    "Verbania": "Verbania",
+    "Aosta": "Aosta",
     "A1": "A1",
-    "U1": "P1",
-    "U2": "P2",
-    "U3": "P3",
-    "U4": "P4",
-    "U5": "P5",
-    "U6": "P6",
-    "U7": "P7",
-    "U8": "P8",
-    "U9": "P9",
     "U10": "P10"
 }
 
