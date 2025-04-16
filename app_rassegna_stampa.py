@@ -120,6 +120,11 @@ def log_visualizzazione(username, filename):
 
 def dashboard():
     st.markdown("## 📚 Archivio Rassegne")
+    
+    # 👋 Frase di benvenuto
+    nome_utente = st.session_state.username
+    st.markdown(f"👋 **Benvenuto, {nome_utente}!**")
+    st.caption("Accedi alle rassegne stampa aggiornate giorno per giorno.")
 
     try:
         service = get_drive_service()
