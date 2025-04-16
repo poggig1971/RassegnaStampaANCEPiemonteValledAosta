@@ -123,7 +123,7 @@ def dashboard():
     
     # 👋 Frase di benvenuto
     nome_utente = st.session_state.username
-    st.markdown(f"👋 **Benvenuto, {nome_utente}!**")
+    st.markdown(f"👋 **Benvenuto ANCE, {nome_utente}!**")
     st.caption("Accedi alle rassegne stampa aggiornate giorno per giorno.")
 
     try:
