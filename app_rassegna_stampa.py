@@ -35,43 +35,39 @@ USER_CREDENTIALS = {
 # === LOGO ===
 st.image("logo.png", width=200)
 
-# === Blocco accesso da Desktop ===
+# === Blocco accesso da Desktop (versione aggiornata e compatibile iPhone) ===
 desktop_blocker_html = """
 <style>
-body {
-    position: relative;
-}
+@media (hover: hover) and (pointer: fine) and (min-width: 1024px) {
+  .stApp::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.95);
+    z-index: 9998;
+  }
 
-@media (min-width: 769px) {
-    .stApp::before {
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: rgba(0,0,0,0.95);
-        z-index: 10000;
-    }
+  .stApp::after {
+    content: "Accesso da Desktop Disabilitato.\\A Questa applicazione è ottimizzata solo per smartphone e tablet.";
+    white-space: pre-line;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 1.5em;
+    font-family: sans-serif;
+    text-align: center;
+    z-index: 9999;
+  }
 
-    .stApp::after {
-        content: "Accesso da Desktop Disabilitato.\\A Questa applicazione è ottimizzata solo per smartphone e tablet.";
-        white-space: pre-line;
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        color: white;
-        font-size: 1.5em;
-        font-family: sans-serif;
-        text-align: center;
-        z-index: 10001;
-    }
-
-    .stApp * {
-        pointer-events: none;
-        filter: blur(4px);
-    }
+  .stApp * {
+    pointer-events: none !important;
+    filter: blur(4px);
+  }
 }
 </style>
 """
