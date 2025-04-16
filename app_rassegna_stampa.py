@@ -24,9 +24,17 @@ Path(TEMP_DIR).mkdir(exist_ok=True)
 AUTH_CACHE = "auth_cache.pkl"
 
 USER_CREDENTIALS = {
-    "A1": "A1",  # Admin
-    "U1": "P1", "U2": "P2", "U3": "P3", "U4": "P4", "U5": "P5",
-    "U6": "P6", "U7": "P7", "U8": "P8", "U9": "P9", "U10": "P10"
+    "Admin": "CorsoDuca15",  # Admin
+    "Torino": "Torino", 
+    "Alessandria": "Alessandria", 
+    "Asti": "Asti", 
+    "Biella": "Biella", 
+    "Verbania": "Verbania",
+    "Novara": "Novara", 
+    "Vercelli": "Vercelli", 
+    "Aosta": "Aosta", 
+    "Cuneo": "Cuneo", 
+    "Presidente": "Presidente"
 }
 
 if "logged_in" not in st.session_state:
@@ -124,7 +132,7 @@ def dashboard():
         st.rerun()
 
     # === Caricamento PDF (solo Admin) ===
-    if st.session_state.username == "A1":
+    if st.session_state.username == "Admin":
         st.subheader("Carica la rassegna stampa in PDF")
         uploaded_files = st.file_uploader("Scegli uno o più file PDF", type="pdf", accept_multiple_files=True)
 
