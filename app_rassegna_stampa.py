@@ -19,9 +19,9 @@ from drive_utils import (
 # === CONFIGURAZIONE ===
 col1, col2 = st.columns([1, 5])
 with col1:
-    st.image("logo.png", width=200)
+    st.image("logo.png", width=250)
 with col2:
-        st.markdown("#### _Rassegna Stampa Digitale_")
+        st.markdown("#### _ _")
 
 TEMP_DIR = "temp_pdfs"
 Path(TEMP_DIR).mkdir(exist_ok=True)
