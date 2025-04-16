@@ -35,68 +35,30 @@ USER_CREDENTIALS = {
 # === LOGO ===
 st.image("logo.png", width=200)
 
-# === BLOCCO DESKTOP CON SBLOCCO EMERGENZA ===
-desktop_blocker_html = """
+# === BLOCCO SU DESKTOP (schermo nero sopra i 1024px) ===
+desktop_blackout_html = """
 <div id="desktop-blocker">
   <style>
-    #desktop-blocker {
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: 10000;
-      width: 100vw;
-      height: 100vh;
-      background-color: rgba(0,0,0,0.95);
-      color: white;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      font-family: sans-serif;
-      text-align: center;
-      padding: 20px;
-    }
+    @media screen and (min-width: 1025px) {
+      #desktop-blocker {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 10000;
+        width: 100vw;
+        height: 100vh;
+        background-color: black;
+      }
 
-    #desktop-blocker h1 {
-      font-size: 2em;
-      margin-bottom: 1em;
-    }
-
-    #desktop-blocker p {
-      font-size: 1.2em;
-      max-width: 90%;
-    }
-
-    #emergency-button {
-      margin-top: 2em;
-      padding: 10px 20px;
-      background-color: #ffffff;
-      color: #000000;
-      font-weight: bold;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
+      .stApp {
+        filter: blur(8px);
+        pointer-events: none;
+      }
     }
   </style>
-  <h1>Accesso da Desktop Disabilitato</h1>
-  <p>Questa applicazione è pensata solo per smartphone e tablet.<br>Per favore, accedi da un dispositivo mobile.</p>
-  <button id="emergency-button" style="display:none;" onclick="document.getElementById('desktop-blocker').style.display='none'; document.body.style.pointerEvents='auto';">Accedi comunque</button>
 </div>
-
-<script>
-  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  const isMobileScreen = window.innerWidth <= 1024;
-  const urlParams = new URLSearchParams(window.location.search);
-  const debugMode = urlParams.get("debug") === "1";
-
-  if (isTouchDevice && isMobileScreen) {
-    document.getElementById("desktop-blocker").style.display = "none";
-  } else if (debugMode) {
-    document.getElementById("emergency-button").style.display = "inline-block";
-  }
-</script>
 """
-st.markdown(desktop_blocker_html, unsafe_allow_html=True)
+st.markdown(desktop_blackout_html, unsafe_allow_html=True)
 
 # === GESTIONE SESSIONE ===
 if "logged_in" not in st.session_state:
