@@ -38,6 +38,10 @@ st.image("logo.png", width=200)
 # === Blocco accesso da Desktop ===
 st.markdown("""
 <style>
+body {
+    position: relative; /* Necessario per posizionare il blocker in modo assoluto rispetto al body */
+}
+
 @media (min-width: 769px) {
     .blocker {
         position: fixed;
