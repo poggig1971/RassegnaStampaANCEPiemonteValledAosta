@@ -48,6 +48,7 @@ def login():
                 st.session_state.logged_in = True
                 st.session_state.username = username
                 st.success(f"✅ Login automatico come **{username}**")
+                st.rerun()  # <-- NECESSARIO!
                 return
 
     # Accesso manuale
