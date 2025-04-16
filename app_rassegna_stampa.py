@@ -35,31 +35,6 @@ USER_CREDENTIALS = {
 # === LOGO ===
 st.image("logo.png", width=200)
 
-# === BLOCCO SU DESKTOP (schermo nero sopra i 1024px) ===
-desktop_blackout_html = """
-<div id="desktop-blocker">
-  <style>
-    @media screen and (min-width: 1025px) {
-      #desktop-blocker {
-        position: fixed;
-        top: 0;
-        left: 0;
-        z-index: 10000;
-        width: 100vw;
-        height: 100vh;
-        background-color: black;
-      }
-
-      .stApp {
-        filter: blur(8px);
-        pointer-events: none;
-      }
-    }
-  </style>
-</div>
-"""
-st.markdown(desktop_blackout_html, unsafe_allow_html=True)
-
 # === GESTIONE SESSIONE ===
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
