@@ -17,7 +17,7 @@ from drive_utils import (
 )
 
 # === CONFIGURAZIONE ===
-col1, col2 = st.columns([1, 5])
+col1, col2 = st.columns([3, 5])
 with col1:
     st.image("logo.png", width=300)
 
