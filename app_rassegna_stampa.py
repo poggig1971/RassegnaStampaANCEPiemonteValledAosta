@@ -35,14 +35,10 @@ USER_CREDENTIALS = {
 # === LOGO ===
 st.image("logo.png", width=200)
 
-# === Blocco accesso da Desktop (compatibile iPhone) ===
+# === Blocco accesso da Desktop (basato solo su larghezza schermo) ===
 desktop_blocker_html = """
 <style>
-@media (hover: hover) and (pointer: fine) and (min-width: 1024px) {
-  .stApp {
-    overflow: hidden; /* Impedisce lo scrolling */
-  }
-
+@media screen and (min-width: 1025px) {
   .stApp::before {
     content: "";
     position: fixed;
@@ -62,7 +58,7 @@ desktop_blocker_html = """
     left: 50%;
     transform: translate(-50%, -50%);
     color: white;
-    font-size: 1.5em;
+    font-size: 1.4em;
     font-family: sans-serif;
     text-align: center;
     z-index: 9999;
@@ -77,10 +73,12 @@ desktop_blocker_html = """
 """
 st.markdown(desktop_blocker_html, unsafe_allow_html=True)
 
+# === GESTIONE SESSIONE ===
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.username = ""
 
+# === FUNZIONE LOGIN ===
 def login():
     st.title("Accesso Rassegna Stampa")
     username = st.text_input("Nome utente", key="username_input")
@@ -93,6 +91,7 @@ def login():
         else:
             st.error("Credenziali non valide")
 
+# === LOG VISUALIZZAZIONI ===
 def log_visualizzazione(username, filename):
     log_path = "log_visualizzazioni.csv"
     tz = pytz.timezone("Europe/Rome")
@@ -117,6 +116,7 @@ def log_visualizzazione(username, filename):
     except Exception as e:
         st.warning(f"⚠️ Impossibile caricare il log su Drive: {e}")
 
+# === DASHBOARD PRINCIPALE ===
 def dashboard():
     st.title("Rassegna Stampa PDF")
     oggi = date.today().strftime("%Y.%m.%d")
@@ -163,6 +163,7 @@ def dashboard():
     else:
         st.info("Nessun file PDF trovato su Google Drive.")
 
+# === FLUSSO PRINCIPALE ===
 def main():
     if not st.session_state.logged_in:
         login()
