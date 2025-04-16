@@ -35,52 +35,49 @@ USER_CREDENTIALS = {
 # === LOGO ===
 st.image("logo.png", width=200)
 
-# === Blocco accesso da Desktop (overlay JS per bloccare schermi larghi) ===
+# === BLOCCO DESKTOP ===
 desktop_blocker_html = """
-<style>
-#desktop-overlay {
-  display: none;
-  position: fixed;
-  z-index: 10000;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0,0,0,0.95);
-  color: white;
-  text-align: center;
-  padding: 20px;
-  font-family: sans-serif;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-}
+<div id="desktop-blocker">
+  <style>
+    #desktop-blocker {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 10000;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0,0,0,0.95);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-family: sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
 
-#desktop-overlay h1 {
-  font-size: 2em;
-  margin-bottom: 1em;
-}
+    #desktop-blocker h1 {
+      font-size: 2em;
+      margin-bottom: 1em;
+    }
 
-#desktop-overlay p {
-  font-size: 1.2em;
-  max-width: 90%;
-}
-</style>
-
-<div id="desktop-overlay">
+    #desktop-blocker p {
+      font-size: 1.2em;
+      max-width: 90%;
+    }
+  </style>
   <h1>Accesso da Desktop Disabilitato</h1>
-  <p>Questa applicazione è pensata per smartphone e tablet. Per favore, accedi da un dispositivo mobile.</p>
+  <p>Questa applicazione è pensata solo per smartphone e tablet.<br>Per favore, accedi da un dispositivo mobile.</p>
 </div>
 
 <script>
-function checkIfDesktop() {
-  if (window.innerWidth > 1024) {
-    document.getElementById("desktop-overlay").style.display = "flex";
-    document.body.style.pointerEvents = "none";
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  const isMobileScreen = window.innerWidth <= 1024;
+
+  if (isTouchDevice && isMobileScreen) {
+    document.getElementById("desktop-blocker").style.display = "none";
   }
-}
-window.onload = checkIfDesktop;
-window.onresize = checkIfDesktop;
 </script>
 """
 st.markdown(desktop_blocker_html, unsafe_allow_html=True)
