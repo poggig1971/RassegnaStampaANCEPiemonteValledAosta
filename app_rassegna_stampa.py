@@ -35,10 +35,14 @@ USER_CREDENTIALS = {
 # === LOGO ===
 st.image("logo.png", width=200)
 
-# === Blocco accesso da Desktop (versione aggiornata e compatibile iPhone) ===
+# === Blocco accesso da Desktop (compatibile iPhone) ===
 desktop_blocker_html = """
 <style>
 @media (hover: hover) and (pointer: fine) and (min-width: 1024px) {
+  .stApp {
+    overflow: hidden; /* Impedisce lo scrolling */
+  }
+
   .stApp::before {
     content: "";
     position: fixed;
