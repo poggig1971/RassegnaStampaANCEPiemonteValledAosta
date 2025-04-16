@@ -1,11 +1,10 @@
 import streamlit as st
 import os
 import base64
-from datetime import date, datetime
-from pathlib import Path
 import csv
 import pytz
-
+from datetime import date, datetime
+from pathlib import Path
 from drive_utils import (
     get_drive_service,
     get_or_create_folder,
@@ -14,9 +13,6 @@ from drive_utils import (
     download_pdf,
     FOLDER_NAME
 )
-
-# === LOGO ===
-st.image("logo.png", width=200)
 
 # === CONFIGURAZIONE ===
 TEMP_DIR = "temp_pdfs"
@@ -35,6 +31,69 @@ USER_CREDENTIALS = {
     "U9": "P9",
     "U10": "P10"
 }
+
+# === LOGO ===
+st.image("logo.png", width=200)
+
+# === HTML e JS per overlay su desktop ===
+st.markdown("""
+    <style>
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        flex-direction: column;
+    }
+    .overlay-content {
+        background-color: white;
+        padding: 30px;
+        border-radius: 10px;
+        text-align: center;
+        max-width: 80%;
+    }
+    .disabled-element {
+        pointer-events: none !important;
+        opacity: 0.5 !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+js = """
+<script>
+function disableDesktop() {
+    const overlay = document.querySelector('.overlay');
+    const streamlitElements = document.querySelectorAll('.stApp');
+
+    if (window.innerWidth > 768) {
+        overlay.style.display = 'flex';
+        streamlitElements.forEach(el => el.classList.add('disabled-element'));
+    } else {
+        overlay.style.display = 'none';
+        streamlitElements.forEach(el => el.classList.remove('disabled-element'));
+    }
+}
+disableDesktop();
+window.addEventListener('resize', disableDesktop);
+</script>
+"""
+
+st.markdown(f"""
+    <div class="overlay">
+        <div class="overlay-content">
+            <h2>Applicazione Ottimizzata per Mobile</h2>
+            <p style="font-size: 1.2em;">Questa rassegna stampa è pensata esclusivamente per l'utilizzo su telefoni e tablet.</p>
+            <p style="font-size: 1.1em;">L'esperienza su schermi più grandi non è supportata.</p>
+        </div>
+    </div>
+    {js}
+""", unsafe_allow_html=True)
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -58,7 +117,6 @@ def log_visualizzazione(username, filename):
     now = datetime.now(tz)
     data = now.strftime("%Y-%m-%d")
     ora = now.strftime("%H:%M:%S")
-
     file_exists = os.path.exists(log_path)
     with open(log_path, mode="a", newline="") as csvfile:
         writer = csv.writer(csvfile)
@@ -66,20 +124,14 @@ def log_visualizzazione(username, filename):
             writer.writerow(["data", "ora", "utente", "file"])
         writer.writerow([data, ora, username, filename])
 
-    # === Upload su Google Drive ===
     try:
         service = get_drive_service()
         folder_id = get_or_create_folder(service, FOLDER_NAME)
-
-        # Elimina vecchio log se esiste
         existing_files = list_pdfs_in_folder(service, folder_id)
         for f in existing_files:
             if f["name"] == "log_visualizzazioni.csv":
                 service.files().delete(fileId=f["id"]).execute()
-
-        # Carica nuovo log
         upload_pdf_to_drive(service, folder_id, log_path, "log_visualizzazioni.csv")
-
     except Exception as e:
         st.warning(f"⚠️ Impossibile caricare il log su Drive: {e}")
 
@@ -101,15 +153,12 @@ def dashboard():
 
         if uploaded_files:
             existing_filenames = [f["name"] for f in files]
-
             for uploaded_file in uploaded_files:
                 filename = uploaded_file.name
                 local_path = os.path.join(TEMP_DIR, filename)
-
                 if filename in existing_filenames:
                     st.warning(f"❗ Il file '{filename}' è già presente su Drive.")
                     continue
-
                 with open(local_path, "wb") as f:
                     f.write(uploaded_file.getbuffer())
                 upload_pdf_to_drive(service, folder_id, local_path, filename)
