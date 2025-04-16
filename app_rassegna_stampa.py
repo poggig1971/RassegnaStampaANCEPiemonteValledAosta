@@ -23,7 +23,7 @@ TEMP_DIR = "temp_pdfs"
 Path(TEMP_DIR).mkdir(exist_ok=True)
 
 USER_CREDENTIALS = {
-    "A1": "A1",  # Amministratore
+    "A1": "A1",  # Admin
     "U1": "P1", "U2": "P2", "U3": "P3", "U4": "P4", "U5": "P5",
     "U6": "P6", "U7": "P7", "U8": "P8", "U9": "P9", "U10": "P10"
 }
@@ -68,12 +68,11 @@ def log_visualizzazione(username, filename):
             writer.writerow(["data", "ora", "utente", "file"])
         writer.writerow([data, ora, username, filename])
 
-    # Upload su Google Drive
     try:
         service = get_drive_service()
         folder_id = get_or_create_folder(service, FOLDER_NAME)
 
-        # Rimuove log precedente se esiste
+        # Elimina log vecchio
         existing_files = list_pdfs_in_folder(service, folder_id)
         for f in existing_files:
             if f["name"] == "log_visualizzazioni.csv":
@@ -130,7 +129,11 @@ def dashboard():
     st.subheader("Archivio Rassegne")
 
     date_options = sorted(
-        list({f["name"].replace(".pdf", "") for f in files if f["name"].endswith(".pdf")}),
+        list({
+            f["name"].replace(".pdf", "")
+            for f in files
+            if f["name"].endswith(".pdf") and is_valid_date_filename(f["name"])
+        }),
         reverse=True
     )
 
@@ -145,7 +148,6 @@ def dashboard():
             with open(selected_local_path, "rb") as f:
                 st.download_button(f"Scarica rassegna {selected_date}", data=f, file_name=selected_file)
 
-            # Log una sola volta per sessione
             if selected_file not in st.session_state.logged_files:
                 log_visualizzazione(st.session_state.username, selected_file)
                 st.session_state.logged_files.add(selected_file)
