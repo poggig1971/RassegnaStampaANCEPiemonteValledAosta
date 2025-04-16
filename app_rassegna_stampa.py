@@ -18,28 +18,23 @@ from drive_utils import (
 # === LOGO ===
 st.image("logo.png", width=200)
 
-# === CONFIGURAZIONE ===
+# === CONFIG ===
 TEMP_DIR = "temp_pdfs"
 Path(TEMP_DIR).mkdir(exist_ok=True)
 
 USER_CREDENTIALS = {
-    "A1": "A1",
-    "U1": "P1",
-    "U2": "P2",
-    "U3": "P3",
-    "U4": "P4",
-    "U5": "P5",
-    "U6": "P6",
-    "U7": "P7",
-    "U8": "P8",
-    "U9": "P9",
-    "U10": "P10"
+    "A1": "A1",  # Amministratore
+    "U1": "P1", "U2": "P2", "U3": "P3", "U4": "P4", "U5": "P5",
+    "U6": "P6", "U7": "P7", "U8": "P8", "U9": "P9", "U10": "P10"
 }
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.username = ""
+if "logged_files" not in st.session_state:
+    st.session_state.logged_files = set()
 
+# === FUNZIONI ===
 def login():
     st.title("Accesso Rassegna Stampa")
     username = st.text_input("Nome utente", key="username_input")
@@ -51,6 +46,13 @@ def login():
             st.rerun()
         else:
             st.error("Credenziali non valide")
+
+def is_valid_date_filename(filename):
+    try:
+        datetime.strptime(filename.replace(".pdf", ""), "%Y.%m.%d")
+        return True
+    except ValueError:
+        return False
 
 def log_visualizzazione(username, filename):
     log_path = "log_visualizzazioni.csv"
@@ -66,12 +68,12 @@ def log_visualizzazione(username, filename):
             writer.writerow(["data", "ora", "utente", "file"])
         writer.writerow([data, ora, username, filename])
 
-    # === Upload su Google Drive ===
+    # Upload su Google Drive
     try:
         service = get_drive_service()
         folder_id = get_or_create_folder(service, FOLDER_NAME)
 
-        # Elimina vecchio log se esiste
+        # Rimuove log precedente se esiste
         existing_files = list_pdfs_in_folder(service, folder_id)
         for f in existing_files:
             if f["name"] == "log_visualizzazioni.csv":
@@ -85,16 +87,20 @@ def log_visualizzazione(username, filename):
 
 def dashboard():
     st.title("Rassegna Stampa PDF")
-    oggi = date.today().strftime("%Y.%m.%d")
 
     try:
         service = get_drive_service()
         folder_id = get_or_create_folder(service, FOLDER_NAME)
         files = list_pdfs_in_folder(service, folder_id)
     except Exception as e:
-        st.error("⚠️ Errore nella connessione a Google Drive. Clicca 'Connetti a Google Drive' se non l'hai ancora fatto.")
+        st.error("⚠️ Errore nella connessione a Google Drive.")
         return
 
+    st.caption(f"Aggiornato alle {datetime.now().strftime('%H:%M:%S')}")
+    if st.button("Aggiorna elenco PDF"):
+        st.rerun()
+
+    # === Caricamento PDF (solo Admin) ===
     if st.session_state.username == "A1":
         st.subheader("Carica la rassegna stampa in PDF")
         uploaded_files = st.file_uploader("Scegli uno o più file PDF", type="pdf", accept_multiple_files=True)
@@ -104,21 +110,31 @@ def dashboard():
 
             for uploaded_file in uploaded_files:
                 filename = uploaded_file.name
-                local_path = os.path.join(TEMP_DIR, filename)
+                if not is_valid_date_filename(filename):
+                    st.warning(f"⚠️ Il nome del file '{filename}' non rispetta il formato 'YYYY.MM.DD.pdf'.")
+                    continue
 
                 if filename in existing_filenames:
                     st.warning(f"❗ Il file '{filename}' è già presente su Drive.")
                     continue
 
+                local_path = os.path.join(TEMP_DIR, filename)
                 with open(local_path, "wb") as f:
                     f.write(uploaded_file.getbuffer())
+
                 upload_pdf_to_drive(service, folder_id, local_path, filename)
                 st.success(f"✅ Caricato: {filename}")
             st.rerun()
 
+    # === Archivio PDF ===
     st.subheader("Archivio Rassegne")
-    if files:
-        date_options = [f["name"].replace(".pdf", "") for f in files if f["name"].endswith(".pdf")]
+
+    date_options = sorted(
+        list({f["name"].replace(".pdf", "") for f in files if f["name"].endswith(".pdf")}),
+        reverse=True
+    )
+
+    if date_options:
         selected_date = st.selectbox("Seleziona una data", date_options)
         selected_file = f"{selected_date}.pdf"
         file_id = next((f["id"] for f in files if f["name"] == selected_file), None)
@@ -128,7 +144,11 @@ def dashboard():
             download_pdf(service, file_id, selected_local_path)
             with open(selected_local_path, "rb") as f:
                 st.download_button(f"Scarica rassegna {selected_date}", data=f, file_name=selected_file)
+
+            # Log una sola volta per sessione
+            if selected_file not in st.session_state.logged_files:
                 log_visualizzazione(st.session_state.username, selected_file)
+                st.session_state.logged_files.add(selected_file)
     else:
         st.info("Nessun file PDF trovato su Google Drive.")
 
@@ -140,6 +160,8 @@ def main():
         if st.sidebar.button("Esci"):
             st.session_state.logged_in = False
             st.session_state.username = ""
+            st.session_state.logged_files = set()
+            st.rerun()
         dashboard()
 
 main()
