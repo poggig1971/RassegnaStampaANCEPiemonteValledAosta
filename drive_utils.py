@@ -1,4 +1,3 @@
-
 import os
 import pickle
 import io
@@ -21,7 +20,12 @@ def authenticate():
 
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
+            try:
+                creds.refresh(Request())
+            except Exception as e:
+                st.error(f"Errore durante il refresh del token: {e}")
+                os.remove(TOKEN_PATH)
+                st.stop()
         else:
             flow = InstalledAppFlow.from_client_secrets_file('.streamlit/client_secret.json', SCOPES)
             auth_url, _ = flow.authorization_url(prompt='consent')
@@ -50,18 +54,21 @@ def get_drive_service():
     creds = authenticate()
     return build('drive', 'v3', credentials=creds)
 
+
 def get_or_create_folder(service, folder_name):
     query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
     results = service.files().list(q=query, spaces='drive', fields='files(id, name)').execute()
     items = results.get('files', [])
     if items:
         return items[0]['id']
+
     file_metadata = {
         'name': folder_name,
         'mimeType': 'application/vnd.google-apps.folder'
     }
     folder = service.files().create(body=file_metadata, fields='id').execute()
     return folder.get('id')
+
 
 def upload_pdf_to_drive(service, folder_id, local_path, drive_filename):
     file_metadata = {
@@ -72,10 +79,13 @@ def upload_pdf_to_drive(service, folder_id, local_path, drive_filename):
     file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
     return file.get('id')
 
+
 def list_pdfs_in_folder(service, folder_id):
     query = f"'{folder_id}' in parents and mimeType='application/pdf' and trashed=false"
     results = service.files().list(q=query, fields="files(id, name)").execute()
-    return sorted(results.get('files', []), key=lambda x: x['name'], reverse=True)
+    files = results.get('files', [])
+    return sorted(files, key=lambda x: x['name'])  # Ordine crescente
+
 
 def download_pdf(service, file_id, local_path):
     request = service.files().get_media(fileId=file_id)
@@ -83,4 +93,8 @@ def download_pdf(service, file_id, local_path):
     downloader = MediaIoBaseDownload(fh, request)
     done = False
     while not done:
-        status, done = downloader.next_chunk()
+        try:
+            status, done = downloader.next_chunk()
+        except Exception as e:
+            st.error(f"Errore durante il download del PDF: {e}")
+            break
