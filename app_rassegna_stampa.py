@@ -5,6 +5,7 @@ from datetime import date, datetime
 from pathlib import Path
 import csv
 import pytz
+import pickle
 
 from drive_utils import (
     get_drive_service,
@@ -15,12 +16,12 @@ from drive_utils import (
     FOLDER_NAME
 )
 
-# === LOGO ===
+# === CONFIGURAZIONE ===
 st.image("logo.png", width=200)
-
-# === CONFIG ===
 TEMP_DIR = "temp_pdfs"
 Path(TEMP_DIR).mkdir(exist_ok=True)
+
+AUTH_CACHE = "auth_cache.pkl"
 
 USER_CREDENTIALS = {
     "A1": "A1",  # Admin
@@ -34,18 +35,40 @@ if "logged_in" not in st.session_state:
 if "logged_files" not in st.session_state:
     st.session_state.logged_files = set()
 
-# === FUNZIONI ===
+
 def login():
     st.title("Accesso Rassegna Stampa")
+
+    # Verifica credenziali salvate
+    if os.path.exists(AUTH_CACHE):
+        with open(AUTH_CACHE, "rb") as f:
+            saved = pickle.load(f)
+            username, password = saved.get("username"), saved.get("password")
+            if username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.success(f"✅ Login automatico come **{username}**")
+                return
+
+    # Accesso manuale
     username = st.text_input("Nome utente", key="username_input")
     password = st.text_input("Password", type="password", key="password_input")
+    remember = st.checkbox("Ricorda le credenziali su questo PC")
+
     if st.button("Accedi"):
         if username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
             st.session_state.logged_in = True
             st.session_state.username = username
+
+            if remember:
+                with open(AUTH_CACHE, "wb") as f:
+                    pickle.dump({"username": username, "password": password}, f)
+
+            st.success("✅ Accesso effettuato")
             st.rerun()
         else:
-            st.error("Credenziali non valide")
+            st.error("❌ Credenziali non valide")
+
 
 def is_valid_date_filename(filename):
     try:
@@ -53,6 +76,7 @@ def is_valid_date_filename(filename):
         return True
     except ValueError:
         return False
+
 
 def log_visualizzazione(username, filename):
     log_path = "log_visualizzazioni.csv"
@@ -72,17 +96,16 @@ def log_visualizzazione(username, filename):
         service = get_drive_service()
         folder_id = get_or_create_folder(service, FOLDER_NAME)
 
-        # Elimina log vecchio
         existing_files = list_pdfs_in_folder(service, folder_id)
         for f in existing_files:
             if f["name"] == "log_visualizzazioni.csv":
                 service.files().delete(fileId=f["id"]).execute()
 
-        # Carica nuovo log
         upload_pdf_to_drive(service, folder_id, log_path, "log_visualizzazioni.csv")
 
     except Exception as e:
         st.warning(f"⚠️ Impossibile caricare il log su Drive: {e}")
+
 
 def dashboard():
     st.title("Rassegna Stampa PDF")
@@ -129,11 +152,11 @@ def dashboard():
     st.subheader("Archivio Rassegne")
 
     date_options = sorted(
-        list({
+        [
             f["name"].replace(".pdf", "")
             for f in files
-            if f["name"].endswith(".pdf") and is_valid_date_filename(f["name"])
-        }),
+            if f["name"].lower().endswith(".pdf") and is_valid_date_filename(f["name"])
+        ],
         reverse=True
     )
 
@@ -154,16 +177,22 @@ def dashboard():
     else:
         st.info("Nessun file PDF trovato su Google Drive.")
 
+
 def main():
     if not st.session_state.logged_in:
         login()
     else:
-        st.sidebar.write(f"Utente: {st.session_state.username}")
-        if st.sidebar.button("Esci"):
-            st.session_state.logged_in = False
-            st.session_state.username = ""
-            st.session_state.logged_files = set()
-            st.rerun()
+        with st.sidebar:
+            st.write(f"👤 Utente: **{st.session_state.username}**")
+            if st.button("Esci"):
+                st.session_state.clear()
+                st.rerun()
+            if st.button("🔓 Esci e Dimentica"):
+                if os.path.exists(AUTH_CACHE):
+                    os.remove(AUTH_CACHE)
+                st.session_state.clear()
+                st.rerun()
         dashboard()
+
 
 main()
