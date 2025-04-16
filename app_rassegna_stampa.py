@@ -21,8 +21,7 @@ col1, col2 = st.columns([1, 5])
 with col1:
     st.image("logo.png", width=200)
 with col2:
-    st.markdown("### **ANCE Piemonte Valle d'Aosta**")
-    st.markdown("#### _Rassegna Stampa Digitale_")
+        st.markdown("#### _Rassegna Stampa Digitale_")
 
 TEMP_DIR = "temp_pdfs"
 Path(TEMP_DIR).mkdir(exist_ok=True)
