@@ -1,10 +1,11 @@
-import streamlit as st
+Ciao puoi verificare questo codice: import streamlit as st
 import os
 import base64
-import csv
-import pytz
 from datetime import date, datetime
 from pathlib import Path
+import csv
+import pytz
+
 from drive_utils import (
     get_drive_service,
     get_or_create_folder,
@@ -14,33 +15,31 @@ from drive_utils import (
     FOLDER_NAME
 )
 
+# === LOGO ===
+st.image("logo.png", width=200)
+
 # === CONFIGURAZIONE ===
 TEMP_DIR = "temp_pdfs"
 Path(TEMP_DIR).mkdir(exist_ok=True)
 
 USER_CREDENTIALS = {
-    "Torino": "Torino",
-    "Alessandria": "Alessandria",
-    "Asti": "Asti",
-    "Cuneo": "Cuneo",
-    "Novara": "Novara",
-    "Vercelli": "Vercelli",
-    "Biella": "Biella",
-    "Verbania": "Verbania",
-    "Aosta": "Aosta",
     "A1": "A1",
+    "U1": "P1",
+    "U2": "P2",
+    "U3": "P3",
+    "U4": "P4",
+    "U5": "P5",
+    "U6": "P6",
+    "U7": "P7",
+    "U8": "P8",
+    "U9": "P9",
     "U10": "P10"
 }
 
-# === LOGO ===
-st.image("logo.png", width=200)
-
-# === GESTIONE SESSIONE ===
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.username = ""
 
-# === FUNZIONE LOGIN ===
 def login():
     st.title("Accesso Rassegna Stampa")
     username = st.text_input("Nome utente", key="username_input")
@@ -53,13 +52,13 @@ def login():
         else:
             st.error("Credenziali non valide")
 
-# === LOG VISUALIZZAZIONI ===
 def log_visualizzazione(username, filename):
     log_path = "log_visualizzazioni.csv"
     tz = pytz.timezone("Europe/Rome")
     now = datetime.now(tz)
     data = now.strftime("%Y-%m-%d")
     ora = now.strftime("%H:%M:%S")
+
     file_exists = os.path.exists(log_path)
     with open(log_path, mode="a", newline="") as csvfile:
         writer = csv.writer(csvfile)
@@ -67,18 +66,23 @@ def log_visualizzazione(username, filename):
             writer.writerow(["data", "ora", "utente", "file"])
         writer.writerow([data, ora, username, filename])
 
+    # === Upload su Google Drive ===
     try:
         service = get_drive_service()
         folder_id = get_or_create_folder(service, FOLDER_NAME)
+
+        # Elimina vecchio log se esiste
         existing_files = list_pdfs_in_folder(service, folder_id)
         for f in existing_files:
             if f["name"] == "log_visualizzazioni.csv":
                 service.files().delete(fileId=f["id"]).execute()
+
+        # Carica nuovo log
         upload_pdf_to_drive(service, folder_id, log_path, "log_visualizzazioni.csv")
+
     except Exception as e:
         st.warning(f"⚠️ Impossibile caricare il log su Drive: {e}")
 
-# === DASHBOARD PRINCIPALE ===
 def dashboard():
     st.title("Rassegna Stampa PDF")
     oggi = date.today().strftime("%Y.%m.%d")
@@ -97,12 +101,15 @@ def dashboard():
 
         if uploaded_files:
             existing_filenames = [f["name"] for f in files]
+
             for uploaded_file in uploaded_files:
                 filename = uploaded_file.name
                 local_path = os.path.join(TEMP_DIR, filename)
+
                 if filename in existing_filenames:
                     st.warning(f"❗ Il file '{filename}' è già presente su Drive.")
                     continue
+
                 with open(local_path, "wb") as f:
                     f.write(uploaded_file.getbuffer())
                 upload_pdf_to_drive(service, folder_id, local_path, filename)
@@ -125,7 +132,6 @@ def dashboard():
     else:
         st.info("Nessun file PDF trovato su Google Drive.")
 
-# === FLUSSO PRINCIPALE ===
 def main():
     if not st.session_state.logged_in:
         login()
