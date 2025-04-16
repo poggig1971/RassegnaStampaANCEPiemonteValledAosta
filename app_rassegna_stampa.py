@@ -35,41 +35,53 @@ USER_CREDENTIALS = {
 # === LOGO ===
 st.image("logo.png", width=200)
 
-# === Blocco accesso da Desktop (basato solo su larghezza schermo) ===
+# === Blocco accesso da Desktop (overlay JS per bloccare schermi larghi) ===
 desktop_blocker_html = """
 <style>
-@media screen and (min-width: 1025px) {
-  .stApp::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.95);
-    z-index: 9998;
-  }
+#desktop-overlay {
+  display: none;
+  position: fixed;
+  z-index: 10000;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.95);
+  color: white;
+  text-align: center;
+  padding: 20px;
+  font-family: sans-serif;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
 
-  .stApp::after {
-    content: "Accesso da Desktop Disabilitato.\\A Questa applicazione è ottimizzata solo per smartphone e tablet.";
-    white-space: pre-line;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-size: 1.4em;
-    font-family: sans-serif;
-    text-align: center;
-    z-index: 9999;
-  }
+#desktop-overlay h1 {
+  font-size: 2em;
+  margin-bottom: 1em;
+}
 
-  .stApp * {
-    pointer-events: none !important;
-    filter: blur(4px);
-  }
+#desktop-overlay p {
+  font-size: 1.2em;
+  max-width: 90%;
 }
 </style>
+
+<div id="desktop-overlay">
+  <h1>Accesso da Desktop Disabilitato</h1>
+  <p>Questa applicazione è pensata per smartphone e tablet. Per favore, accedi da un dispositivo mobile.</p>
+</div>
+
+<script>
+function checkIfDesktop() {
+  if (window.innerWidth > 1024) {
+    document.getElementById("desktop-overlay").style.display = "flex";
+    document.body.style.pointerEvents = "none";
+  }
+}
+window.onload = checkIfDesktop;
+window.onresize = checkIfDesktop;
+</script>
 """
 st.markdown(desktop_blocker_html, unsafe_allow_html=True)
 
