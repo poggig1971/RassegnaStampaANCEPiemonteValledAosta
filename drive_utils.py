@@ -33,18 +33,31 @@ def authenticate():
                 os.remove(TOKEN_PATH)
                 st.stop()
         else:
+    try:
+        flow = InstalledAppFlow.from_client_secrets_file(
+            '.streamlit/client_secret.json', SCOPES
+        )
+        auth_url, _ = flow.authorization_url(prompt='consent')
+        st.warning("🔐 Autenticazione richiesta")
+        st.markdown(f"[Clicca qui per autorizzare l'accesso a Google Drive]({auth_url})")
+        auth_code = st.text_input("🔑 Inserisci il codice di autorizzazione")
+
+        if st.button("Conferma codice"):
             try:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    '.streamlit/client_secret.json', SCOPES
-                )
-                creds = flow.run_local_server(port=8502)
+                flow.fetch_token(code=auth_code)
+                creds = flow.credentials
                 with open(TOKEN_PATH, 'wb') as token:
                     pickle.dump(creds, token)
-                st.success("✅ Autenticazione completata con successo. L'app verrà ricaricata.")
+                st.success("✅ Autenticazione completata. Ricarica l'app.")
                 st.experimental_rerun()
             except Exception as e:
                 st.error(f"Errore durante l'autenticazione: {e}")
                 st.stop()
+        else:
+            st.stop()
+    except Exception as e:
+        st.error(f"Errore nel flusso di autenticazione: {e}")
+        st.stop()
 
     return creds
 
