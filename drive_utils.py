@@ -7,17 +7,23 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 
-SCOPES = ['https://www.googleapis.com/auth/drive.file']
-TOKEN_PATH = 'token_drive.pkl'
-FOLDER_NAME = 'Rassegna ANCE'
+print("✅ drive_utils.py caricato correttamente")
 
+SCOPES = ['https://www.googleapis.com/auth/drive.file']
+TOKEN_PATH = os.path.join(os.path.dirname(__file__), 'token_drive.pkl')
+
+# Nome predefinito della cartella su Google Drive
+FOLDER_NAME = "Rassegna ANCE"
 
 def authenticate():
     creds = None
+
+    # Usa token locale se esiste
     if os.path.exists(TOKEN_PATH):
         with open(TOKEN_PATH, 'rb') as token:
             creds = pickle.load(token)
 
+    # Altrimenti, avvia l'autenticazione
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             try:
@@ -27,32 +33,30 @@ def authenticate():
                 os.remove(TOKEN_PATH)
                 st.stop()
         else:
-            flow = InstalledAppFlow.from_client_secrets_file('.streamlit/client_secret.json', SCOPES)
-            auth_url, _ = flow.authorization_url(prompt='consent')
-
-            st.warning("🔐 Autenticazione richiesta")
-            st.markdown(f"[Clicca qui per autorizzare l'accesso a Google Drive]({auth_url})")
-            auth_code = st.text_input("Inserisci il codice di autorizzazione", type="default")
-
-            if st.button("Conferma codice"):
-                try:
-                    flow.fetch_token(code=auth_code)
-                    creds = flow.credentials
-                    with open(TOKEN_PATH, 'wb') as token:
-                        pickle.dump(creds, token)
-                    st.success("✅ Autenticazione completata con successo. Ricarica l'app.")
-                    st.stop()
-                except Exception as e:
-                    st.error(f"Errore durante l'autenticazione: {e}")
-                    st.stop()
-            else:
+            try:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    '.streamlit/client_secret.json', SCOPES
+                )
+                creds = flow.run_local_server(port=8502)
+                with open(TOKEN_PATH, 'wb') as token:
+                    pickle.dump(creds, token)
+                st.success("✅ Autenticazione completata con successo. L'app verrà ricaricata.")
+                st.experimental_rerun()
+            except Exception as e:
+                st.error(f"Errore durante l'autenticazione: {e}")
                 st.stop()
+
     return creds
 
 
 def get_drive_service():
-    creds = authenticate()
-    return build('drive', 'v3', credentials=creds)
+    try:
+        creds = authenticate()
+        return build('drive', 'v3', credentials=creds)
+    except Exception as e:
+        st.error("⚠️ Errore nella connessione a Google Drive.")
+        st.exception(e)
+        st.stop()
 
 
 def get_or_create_folder(service, folder_name):
@@ -84,7 +88,7 @@ def list_pdfs_in_folder(service, folder_id):
     query = f"'{folder_id}' in parents and mimeType='application/pdf' and trashed=false"
     results = service.files().list(q=query, fields="files(id, name)").execute()
     files = results.get('files', [])
-    return sorted(files, key=lambda x: x['name'])  # Ordine crescente
+    return sorted(files, key=lambda x: x['name'])
 
 
 def download_pdf(service, file_id, local_path):
