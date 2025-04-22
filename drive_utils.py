@@ -18,12 +18,10 @@ FOLDER_NAME = "Rassegna ANCE"
 def authenticate():
     creds = None
 
-    # Usa token locale se esiste
     if os.path.exists(TOKEN_PATH):
         with open(TOKEN_PATH, 'rb') as token:
             creds = pickle.load(token)
 
-    # Altrimenti, avvia l'autenticazione
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             try:
@@ -33,31 +31,31 @@ def authenticate():
                 os.remove(TOKEN_PATH)
                 st.stop()
         else:
-    try:
-        flow = InstalledAppFlow.from_client_secrets_file(
-            '.streamlit/client_secret.json', SCOPES
-        )
-        auth_url, _ = flow.authorization_url(prompt='consent')
-        st.warning("🔐 Autenticazione richiesta")
-        st.markdown(f"[Clicca qui per autorizzare l'accesso a Google Drive]({auth_url})")
-        auth_code = st.text_input("🔑 Inserisci il codice di autorizzazione")
-
-        if st.button("Conferma codice"):
             try:
-                flow.fetch_token(code=auth_code)
-                creds = flow.credentials
-                with open(TOKEN_PATH, 'wb') as token:
-                    pickle.dump(creds, token)
-                st.success("✅ Autenticazione completata. Ricarica l'app.")
-                st.experimental_rerun()
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    '.streamlit/client_secret.json', SCOPES
+                )
+                auth_url, _ = flow.authorization_url(prompt='consent')
+                st.warning("🔐 Autenticazione richiesta")
+                st.markdown(f"[Clicca qui per autorizzare l'accesso a Google Drive]({auth_url})")
+                auth_code = st.text_input("🔑 Inserisci il codice di autorizzazione")
+
+                if st.button("Conferma codice"):
+                    try:
+                        flow.fetch_token(code=auth_code)
+                        creds = flow.credentials
+                        with open(TOKEN_PATH, 'wb') as token:
+                            pickle.dump(creds, token)
+                        st.success("✅ Autenticazione completata. Ricarica l'app.")
+                        st.experimental_rerun()
+                    except Exception as e:
+                        st.error(f"Errore durante l'autenticazione: {e}")
+                        st.stop()
+                else:
+                    st.stop()
             except Exception as e:
-                st.error(f"Errore durante l'autenticazione: {e}")
+                st.error(f"Errore nel flusso di autenticazione: {e}")
                 st.stop()
-        else:
-            st.stop()
-    except Exception as e:
-        st.error(f"Errore nel flusso di autenticazione: {e}")
-        st.stop()
 
     return creds
 
