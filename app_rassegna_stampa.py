@@ -11,7 +11,7 @@ favicon = Image.open("favicon_ance.png")
 st.set_page_config(
     page_title="Rassegna ANCE Piemonte",
     page_icon=favicon,
-    layout="wide"
+    layout="centered"
 )
 
 st.markdown("""
