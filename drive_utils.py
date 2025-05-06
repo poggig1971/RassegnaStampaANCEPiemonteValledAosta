@@ -38,19 +38,35 @@ def get_or_create_folder(service, folder_name):
     folder = service.files().create(body=file_metadata, fields='id').execute()
     return folder.get('id')
 
-def upload_pdf_to_drive(service, folder_id, file_obj, drive_filename, is_memory_file=False):
+def upload_pdf_to_drive(service, folder_id, file_obj, drive_filename, is_memory_file=False, overwrite=False):
+    existing_files = service.files().list(
+        q=f"'{folder_id}' in parents and name='{drive_filename}' and trashed=false",
+        fields='files(id, name)'
+    ).execute().get("files", [])
+
+    if existing_files:
+        if overwrite:
+            for f in existing_files:
+                service.files().delete(fileId=f['id']).execute()
+            st.info(f"ℹ️ Il file '{drive_filename}' è stato sovrascritto.")
+        else:
+            st.warning(f"⚠️ Il file '{drive_filename}' è già presente su Google Drive. Upload annullato.")
+            return existing_files[0]['id']
+
     file_metadata = {
         'name': drive_filename,
         'parents': [folder_id]
     }
 
     if is_memory_file:
-        # Per CSV o altri file in memoria (es. log visualizzazioni)
         if hasattr(file_obj, 'getvalue'):
-            file_obj = io.BytesIO(file_obj.getvalue().encode("utf-8"))
-        media = MediaIoBaseUpload(file_obj, mimetype='text/csv')
+            content = file_obj.getvalue()
+            if isinstance(content, str):
+                file_obj = io.BytesIO(content.encode("utf-8"))
+            else:
+                file_obj = io.BytesIO(content)
+        media = MediaIoBaseUpload(file_obj, mimetype='application/pdf' if drive_filename.endswith('.pdf') else 'text/csv')
     else:
-        # Per PDF locali sul disco
         media = MediaFileUpload(file_obj, mimetype='application/pdf')
 
     file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
