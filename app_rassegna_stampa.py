@@ -1,13 +1,10 @@
-
 import streamlit as st
 import os
-import base64
-from datetime import date, datetime
+from datetime import datetime
 from pathlib import Path
-import csv
 import pytz
 import pandas as pd
-import matplotlib.pyplot as plt
+from io import StringIO
 
 from drive_utils import (
     get_drive_service,
@@ -67,34 +64,37 @@ def is_valid_date_filename(filename):
         return False
 
 def log_visualizzazione(username, filename):
-    log_path = "log_visualizzazioni.csv"
     tz = pytz.timezone("Europe/Rome")
     now = datetime.now(tz)
     data = now.strftime("%Y-%m-%d")
     ora = now.strftime("%H:%M:%S")
 
-    # ✅ 1. Scrittura del file locale (sempre prima)
-    file_exists = os.path.exists(log_path)
-    with open(log_path, mode="a", newline="") as csvfile:
-        writer = csv.writer(csvfile)
-        if not file_exists:
-            writer.writerow(["data", "ora", "utente", "file"])
-        writer.writerow([data, ora, username, filename])
-
-    # ✅ 2. Upload su Google Drive
     try:
         service = get_drive_service()
         folder_id = get_or_create_folder(service, FOLDER_NAME)
-
         existing_files = list_pdfs_in_folder(service, folder_id)
-        for f in existing_files:
-            if f["name"] == "log_visualizzazioni.csv":
-                service.files().delete(fileId=f["id"]).execute()
 
-        upload_pdf_to_drive(service, folder_id, log_path, "log_visualizzazioni.csv")
+        file_id = next((f["id"] for f in existing_files if f["name"] == "log_visualizzazioni.csv"), None)
+        if file_id:
+            content = download_pdf(service, file_id, return_bytes=True).decode("utf-8")
+            df = pd.read_csv(StringIO(content))
+        else:
+            df = pd.DataFrame(columns=["data", "ora", "utente", "file"])
+
+        new_row = {"data": data, "ora": ora, "utente": username, "file": filename}
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+
+        csv_buffer = StringIO()
+        df.to_csv(csv_buffer, index=False)
+        csv_buffer.seek(0)
+
+        if file_id:
+            service.files().delete(fileId=file_id).execute()
+
+        upload_pdf_to_drive(service, folder_id, csv_buffer, "log_visualizzazioni.csv", is_memory_file=True)
 
     except Exception as e:
-        st.warning(f"⚠️ Impossibile caricare il log su Drive: {e}")
+        st.warning(f"⚠️ Impossibile aggiornare il log su Drive: {e}")
 
 def dashboard():
     st.markdown("## 📚 Archivio Rassegne")
@@ -105,6 +105,7 @@ def dashboard():
     else:
         st.markdown(f"👋 **Benvenuto da ANCE {nome_utente}!**")
         st.caption("Accedi alle rassegne stampa aggiornate giorno per giorno.")
+
     try:
         service = get_drive_service()
         folder_id = get_or_create_folder(service, FOLDER_NAME)
@@ -118,7 +119,7 @@ def dashboard():
         st.rerun()
 
     if st.session_state.username == "Admin":
-        st.markdown("### 📤 Carica nuova rassegna stampa")
+        st.markdown("### 📄 Carica nuova rassegna stampa")
         uploaded_files = st.file_uploader("Seleziona uno o più file PDF", type="pdf", accept_multiple_files=True)
         if uploaded_files:
             existing_filenames = [f["name"] for f in files]
@@ -143,7 +144,7 @@ def dashboard():
     )
 
     if date_options:
-        selected_date = st.selectbox("📅 Seleziona una data", date_options)
+        selected_date = st.selectbox("🗓️ Seleziona una data", date_options)
         selected_file = f"{selected_date}.pdf"
         file_id = next((f["id"] for f in files if f["name"] == selected_file), None)
         selected_local_path = os.path.join(TEMP_DIR, selected_file)
@@ -155,38 +156,50 @@ def dashboard():
                 log_visualizzazione(st.session_state.username, selected_file)
                 st.session_state.logged_files.add(selected_file)
     else:
-        st.info("📭 Nessun file PDF trovato su Google Drive.")
+        st.info("📬 Nessun file PDF trovato su Google Drive.")
 
 def mostra_statistiche():
     st.markdown("## 📈 Statistiche di accesso")
-    if st.session_state.username == "Admin" and os.path.exists("log_visualizzazioni.csv"):
-        with open("log_visualizzazioni.csv", "rb") as f:
+    try:
+        service = get_drive_service()
+        folder_id = get_or_create_folder(service, FOLDER_NAME)
+        files = list_pdfs_in_folder(service, folder_id)
+        file_id = next((f["id"] for f in files if f["name"] == "log_visualizzazioni.csv"), None)
+
+        if not file_id:
+            st.info("📬 Nessun dato ancora disponibile.")
+            return
+
+        content = download_pdf(service, file_id, return_bytes=True).decode("utf-8")
+        df = pd.read_csv(StringIO(content))
+
+        if st.session_state.username == "Admin":
             st.download_button(
                 label="⬇️ Scarica log visualizzazioni (CSV)",
-                data=f,
+                data=content,
                 file_name="log_visualizzazioni.csv",
                 mime="text/csv"
             )
-    if not os.path.exists("log_visualizzazioni.csv"):
-        st.info("Nessun dato ancora disponibile.")
-        return
-    df = pd.read_csv("log_visualizzazioni.csv")
-    st.metric("Totale visualizzazioni", len(df))
-    top_utenti = df['utente'].value_counts().head(5)
-    st.markdown("### 👥 Utenti più attivi")
-    st.bar_chart(top_utenti)
-    top_file = df['file'].value_counts().head(5)
-    st.markdown("### 📁 File più visualizzati")
-    st.bar_chart(top_file)
-    df['data'] = pd.to_datetime(df['data'])
-    oggi = pd.to_datetime(datetime.now().date())
-    ultimi_30 = df[df['data'] >= oggi - pd.Timedelta(days=30)]
-    if ultimi_30.empty:
-        st.info("📭 Nessun accesso negli ultimi 30 giorni.")
-    else:
-        st.markdown("### 📆 Accessi negli ultimi 30 giorni")
-        daily = ultimi_30.groupby('data').size()
-        st.line_chart(daily)
+
+        st.metric("Totale visualizzazioni", len(df))
+        top_utenti = df['utente'].value_counts().head(5)
+        st.markdown("### 👥 Utenti più attivi")
+        st.bar_chart(top_utenti)
+        top_file = df['file'].value_counts().head(5)
+        st.markdown("### 📁 File più visualizzati")
+        st.bar_chart(top_file)
+        df['data'] = pd.to_datetime(df['data'])
+        oggi = pd.to_datetime(datetime.now().date())
+        ultimi_30 = df[df['data'] >= oggi - pd.Timedelta(days=30)]
+        if ultimi_30.empty:
+            st.info("📬 Nessun accesso negli ultimi 30 giorni.")
+        else:
+            st.markdown("### 🗖️ Accessi negli ultimi 30 giorni")
+            daily = ultimi_30.groupby('data').size()
+            st.line_chart(daily)
+
+    except Exception as e:
+        st.error(f"❌ Errore durante il recupero delle statistiche: {e}")
 
 def main():
     if not st.session_state.logged_in:
@@ -209,4 +222,3 @@ def main():
                 st.warning("⚠️ Accesso riservato. Le statistiche sono visibili solo all'amministratore.")
 
 main()
-
