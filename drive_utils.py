@@ -1,24 +1,27 @@
 import os
 import io
-import pickle
+import json
 import streamlit as st
+from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 
-print("✅ drive_utils.py caricato correttamente")
+print("✅ drive_utils.py caricato correttamente (versione cloud)")
 
 # === CONFIGURAZIONE ===
 SCOPES = ['https://www.googleapis.com/auth/drive.file']
-TOKEN_PATH = os.path.join(os.path.dirname(__file__), 'token_drive.pkl')
 FOLDER_NAME = "Rassegna ANCE"
 
 def get_drive_service():
     try:
-        with open(TOKEN_PATH, 'rb') as token:
-            creds = pickle.load(token)
+        service_account_info = json.loads(st.secrets["SERVICE_ACCOUNT_JSON"])
+        creds = service_account.Credentials.from_service_account_info(
+            service_account_info,
+            scopes=SCOPES
+        )
         return build('drive', 'v3', credentials=creds)
     except Exception as e:
-        st.error("⚠️ Errore durante il caricamento del token pickle.")
+        st.error("⚠️ Errore nella connessione a Google Drive.")
         st.exception(e)
         st.stop()
 
