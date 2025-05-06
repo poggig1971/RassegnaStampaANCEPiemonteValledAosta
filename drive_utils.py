@@ -1,11 +1,10 @@
-
 import os
 import io
 import json
 import streamlit as st
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
+from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload, MediaIoBaseUpload
 
 print("✅ drive_utils.py caricato correttamente (versione cloud)")
 
@@ -39,12 +38,21 @@ def get_or_create_folder(service, folder_name):
     folder = service.files().create(body=file_metadata, fields='id').execute()
     return folder.get('id')
 
-def upload_pdf_to_drive(service, folder_id, local_path, drive_filename):
+def upload_pdf_to_drive(service, folder_id, file_obj, drive_filename, is_memory_file=False):
     file_metadata = {
         'name': drive_filename,
         'parents': [folder_id]
     }
-    media = MediaFileUpload(local_path, mimetype='application/pdf')
+
+    if is_memory_file:
+        # Per CSV o altri file in memoria (es. log visualizzazioni)
+        if hasattr(file_obj, 'getvalue'):
+            file_obj = io.BytesIO(file_obj.getvalue().encode("utf-8"))
+        media = MediaIoBaseUpload(file_obj, mimetype='text/csv')
+    else:
+        # Per PDF locali sul disco
+        media = MediaFileUpload(file_obj, mimetype='application/pdf')
+
     file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
     return file.get('id')
 
@@ -54,15 +62,25 @@ def list_pdfs_in_folder(service, folder_id):
     files = results.get('files', [])
     return sorted(files, key=lambda x: x['name'])
 
-def download_pdf(service, file_id, local_path):
+def download_pdf(service, file_id, local_path=None, return_bytes=False):
     request = service.files().get_media(fileId=file_id)
-    fh = io.FileIO(local_path, 'wb')
+
+    if return_bytes:
+        fh = io.BytesIO()
+    else:
+        fh = io.FileIO(local_path, 'wb')
+
     downloader = MediaIoBaseDownload(fh, request)
     done = False
     while not done:
         try:
             status, done = downloader.next_chunk()
         except Exception as e:
-            st.error(f"Errore durante il download del PDF: {e}")
+            st.error(f"Errore durante il download del file: {e}")
             break
+
+    if return_bytes:
+        fh.seek(0)
+        return fh.read()
+
 
