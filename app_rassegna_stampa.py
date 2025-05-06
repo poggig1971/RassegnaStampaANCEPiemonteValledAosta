@@ -16,7 +16,7 @@ st.set_page_config(
 
 st.markdown("""
     <head>
-        <link rel="apple-touch-icon" sizes="180x180" href="app-icon.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="public/app-icon.png">
         <meta name="apple-mobile-web-app-capable" content="yes">
     </head>
 """, unsafe_allow_html=True)
