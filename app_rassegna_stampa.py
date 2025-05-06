@@ -1,3 +1,4 @@
+
 import streamlit as st
 import os
 import base64
@@ -71,20 +72,27 @@ def log_visualizzazione(username, filename):
     now = datetime.now(tz)
     data = now.strftime("%Y-%m-%d")
     ora = now.strftime("%H:%M:%S")
+
+    # ✅ 1. Scrittura del file locale (sempre prima)
     file_exists = os.path.exists(log_path)
     with open(log_path, mode="a", newline="") as csvfile:
         writer = csv.writer(csvfile)
         if not file_exists:
             writer.writerow(["data", "ora", "utente", "file"])
         writer.writerow([data, ora, username, filename])
+
+    # ✅ 2. Upload su Google Drive
     try:
         service = get_drive_service()
         folder_id = get_or_create_folder(service, FOLDER_NAME)
+
         existing_files = list_pdfs_in_folder(service, folder_id)
         for f in existing_files:
             if f["name"] == "log_visualizzazioni.csv":
                 service.files().delete(fileId=f["id"]).execute()
+
         upload_pdf_to_drive(service, folder_id, log_path, "log_visualizzazioni.csv")
+
     except Exception as e:
         st.warning(f"⚠️ Impossibile caricare il log su Drive: {e}")
 
@@ -201,3 +209,4 @@ def main():
                 st.warning("⚠️ Accesso riservato. Le statistiche sono visibili solo all'amministratore.")
 
 main()
+
