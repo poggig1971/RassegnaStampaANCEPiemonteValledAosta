@@ -1,4 +1,18 @@
 import streamlit as st 
+
+from PIL import Image
+
+# Carica l'immagine della favicon
+favicon = Image.open("favicon_ance.png")
+
+# Configura la pagina con titolo e favicon
+st.set_page_config(
+    page_title="Rassegna ANCE Piemonte",
+    page_icon=favicon,
+    layout="wide"
+)
+
+
 import os
 from datetime import datetime, date
 import pytz
