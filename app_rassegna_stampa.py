@@ -1,10 +1,9 @@
 import streamlit as st
 import os
 from datetime import datetime
-from pathlib import Path
 import pytz
 import pandas as pd
-from io import StringIO
+from io import StringIO, BytesIO
 
 from drive_utils import (
     get_drive_service,
@@ -19,9 +18,6 @@ from drive_utils import (
 col1, col2 = st.columns([3, 5])
 with col1:
     st.image("logo.png", width=300)
-
-TEMP_DIR = "temp_pdfs"
-Path(TEMP_DIR).mkdir(exist_ok=True)
 
 USER_CREDENTIALS = {
     "Admin": "CorsoDuca15",
@@ -131,10 +127,9 @@ def dashboard():
                 if filename in existing_filenames:
                     st.warning(f"❗ Il file '{filename}' è già presente su Drive.")
                     continue
-                local_path = os.path.join(TEMP_DIR, filename)
-                with open(local_path, "wb") as f:
+                with open(filename, "wb") as f:
                     f.write(uploaded_file.getbuffer())
-                upload_pdf_to_drive(service, folder_id, local_path, filename)
+                upload_pdf_to_drive(service, folder_id, filename, filename)
                 st.success(f"✅ Caricato: {filename}")
             st.rerun()
 
@@ -147,11 +142,9 @@ def dashboard():
         selected_date = st.selectbox("🗓️ Seleziona una data", date_options)
         selected_file = f"{selected_date}.pdf"
         file_id = next((f["id"] for f in files if f["name"] == selected_file), None)
-        selected_local_path = os.path.join(TEMP_DIR, selected_file)
         if file_id:
-            download_pdf(service, file_id, selected_local_path)
-            with open(selected_local_path, "rb") as f:
-                st.download_button(f"⬇️ Scarica rassegna {selected_date}", data=f, file_name=selected_file)
+            content = download_pdf(service, file_id, return_bytes=True)
+            st.download_button(f"⬇️ Scarica rassegna {selected_date}", data=BytesIO(content), file_name=selected_file)
             if selected_file not in st.session_state.logged_files:
                 log_visualizzazione(st.session_state.username, selected_file)
                 st.session_state.logged_files.add(selected_file)
@@ -222,3 +215,4 @@ def main():
                 st.warning("⚠️ Accesso riservato. Le statistiche sono visibili solo all'amministratore.")
 
 main()
+
