@@ -1,23 +1,25 @@
 import streamlit as st 
-
-from PIL import Image
-
-# Carica l'immagine della favicon
-favicon = Image.open("favicon_ance.png")
-
-# Configura la pagina con titolo e favicon
-st.set_page_config(
-    page_title="Rassegna ANCE Piemonte",
-    page_icon=favicon,
-    layout="centered"
-)
-
-
 import os
 from datetime import datetime, date
 import pytz
 import pandas as pd
 from io import StringIO, BytesIO
+from PIL import Image
+
+# === CONFIGURAZIONE INIZIALE ===
+favicon = Image.open("favicon_ance.png")
+st.set_page_config(
+    page_title="Rassegna ANCE Piemonte",
+    page_icon=favicon,
+    layout="wide"
+)
+
+st.markdown("""
+    <head>
+        <link rel="apple-touch-icon" sizes="180x180" href="app-icon.png">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+    </head>
+""", unsafe_allow_html=True)
 
 from drive_utils import (
     get_drive_service,
