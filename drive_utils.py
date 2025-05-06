@@ -1,3 +1,4 @@
+
 import os
 import io
 import json
@@ -31,7 +32,6 @@ def get_or_create_folder(service, folder_name):
     items = results.get('files', [])
     if items:
         return items[0]['id']
-
     file_metadata = {
         'name': folder_name,
         'mimeType': 'application/vnd.google-apps.folder'
@@ -65,3 +65,4 @@ def download_pdf(service, file_id, local_path):
         except Exception as e:
             st.error(f"Errore durante il download del PDF: {e}")
             break
+
