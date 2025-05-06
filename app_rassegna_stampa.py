@@ -133,6 +133,16 @@ def dashboard():
                 st.success(f"✅ Caricato: {filename}")
             st.rerun()
 
+        st.markdown("### 🗑️ Elimina file da Drive")
+        deletable_files = [f for f in files if f["name"].lower().endswith(".pdf")]
+        file_to_delete = st.selectbox("Seleziona un file da eliminare", [f["name"] for f in deletable_files])
+        if st.button("Elimina file selezionato"):
+            file_id = next((f["id"] for f in deletable_files if f["name"] == file_to_delete), None)
+            if file_id:
+                service.files().delete(fileId=file_id).execute()
+                st.success(f"✅ File '{file_to_delete}' eliminato da Google Drive.")
+                st.rerun()
+
     date_options = sorted(
         [f["name"].replace(".pdf", "") for f in files if f["name"].lower().endswith(".pdf") and is_valid_date_filename(f["name"])],
         reverse=True
@@ -215,4 +225,5 @@ def main():
                 st.warning("⚠️ Accesso riservato. Le statistiche sono visibili solo all'amministratore.")
 
 main()
+
 
