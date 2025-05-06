@@ -58,6 +58,80 @@ def is_valid_date_filename(filename):
     except ValueError:
         return False
 
+def log_visualizzazione(username, filename):
+    tz = pytz.timezone("Europe/Rome")
+    now = datetime.now(tz)
+    data = now.strftime("%Y-%m-%d")
+    ora = now.strftime("%H:%M:%S")
+
+    try:
+        service = get_drive_service()
+        files = list_pdfs_in_folder(service)
+        file_id = next((f["id"] for f in files if f["name"] == "log_visualizzazioni.csv"), None)
+
+        if file_id:
+            content = download_pdf(service, file_id, return_bytes=True).decode("utf-8")
+            df = pd.read_csv(StringIO(content))
+        else:
+            df = pd.DataFrame(columns=["data", "ora", "utente", "file"])
+
+        new_row = {"data": data, "ora": ora, "utente": username, "file": filename}
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+
+        csv_buffer = StringIO()
+        df.to_csv(csv_buffer, index=False)
+        csv_buffer.seek(0)
+
+        if file_id:
+            service.files().delete(fileId=file_id).execute()
+
+        upload_pdf_to_drive(service, csv_buffer, "log_visualizzazioni.csv", is_memory_file=True)
+
+    except Exception as e:
+        st.warning(f"⚠️ Impossibile aggiornare il log delle visualizzazioni: {e}")
+
+def mostra_statistiche():
+    st.markdown("## 📈 Statistiche di accesso")
+    try:
+        service = get_drive_service()
+        files = list_pdfs_in_folder(service)
+        file_id = next((f["id"] for f in files if f["name"] == "log_visualizzazioni.csv"), None)
+
+        if not file_id:
+            st.info("📬 Nessun dato ancora disponibile.")
+            return
+
+        content = download_pdf(service, file_id, return_bytes=True).decode("utf-8")
+        df = pd.read_csv(StringIO(content))
+
+        if st.session_state.username == "Admin":
+            st.download_button(
+                label="⬇️ Scarica log visualizzazioni (CSV)",
+                data=content,
+                file_name="log_visualizzazioni.csv",
+                mime="text/csv"
+            )
+
+        st.metric("Totale visualizzazioni", len(df))
+        top_utenti = df['utente'].value_counts().head(5)
+        st.markdown("### 👥 Utenti più attivi")
+        st.bar_chart(top_utenti)
+        top_file = df['file'].value_counts().head(5)
+        st.markdown("### 📁 File più visualizzati")
+        st.bar_chart(top_file)
+        df['data'] = pd.to_datetime(df['data'])
+        oggi = pd.to_datetime(datetime.now().date())
+        ultimi_30 = df[df['data'] >= oggi - pd.Timedelta(days=30)]
+        if ultimi_30.empty:
+            st.info("📬 Nessun accesso negli ultimi 30 giorni.")
+        else:
+            st.markdown("### 🗖️ Accessi negli ultimi 30 giorni")
+            daily = ultimi_30.groupby('data').size()
+            st.line_chart(daily)
+
+    except Exception as e:
+        st.error(f"❌ Errore durante il recupero delle statistiche: {e}")
+
 def dashboard():
     st.markdown("## 📚 Archivio Rassegne")
     nome_utente = st.session_state.username
@@ -120,6 +194,9 @@ def dashboard():
         if file_id:
             content = download_pdf(service, file_id, return_bytes=True)
             st.download_button(f"⬇️ Scarica rassegna {selected_date}", data=BytesIO(content), file_name=selected_file)
+            if selected_file not in st.session_state.logged_files:
+                log_visualizzazione(st.session_state.username, selected_file)
+                st.session_state.logged_files.add(selected_file)
     else:
         st.info("📬 Nessun file PDF trovato su Google Drive.")
 
@@ -130,12 +207,17 @@ def main():
         with st.sidebar:
             st.markdown("## ⚙️ Pannello")
             st.markdown(f"👤 Utente: **{st.session_state.username}**")
-            page = st.radio("📋 Seleziona una pagina", ["Archivio"])
+            page = st.radio("📋 Seleziona una pagina", ["Archivio", "Statistiche"])
             st.write("---")
             if st.button("🚪 Esci"):
                 st.session_state.clear()
                 st.rerun()
         if page == "Archivio":
             dashboard()
+        elif page == "Statistiche":
+            if st.session_state.username == "Admin":
+                mostra_statistiche()
+            else:
+                st.warning("⚠️ Accesso riservato. Le statistiche sono visibili solo all'amministratore.")
 
 main()
