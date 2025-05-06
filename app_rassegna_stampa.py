@@ -176,7 +176,7 @@ def dashboard():
     else:
         st.warning("📭 La rassegna di oggi non è ancora caricata.")
 
-    if files:
+   if files:
     date_strings = [
         f["name"].replace(".pdf", "")
         for f in files
