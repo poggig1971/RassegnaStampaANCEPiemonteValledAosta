@@ -1,71 +1,23 @@
 import os
-import pickle
 import io
-import streamlit as st
-from google.auth.transport.requests import Request
-from google_auth_oauthlib.flow import InstalledAppFlow
+from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
+import streamlit as st
 
 print("✅ drive_utils.py caricato correttamente")
 
+# === CONFIGURAZIONE ===
 SCOPES = ['https://www.googleapis.com/auth/drive.file']
 TOKEN_PATH = os.path.join(os.path.dirname(__file__), 'token_drive.pkl')
-
-# Nome predefinito della cartella su Google Drive
 FOLDER_NAME = "Rassegna ANCE"
-
-def authenticate():
-    creds = None
-
-    if os.path.exists(TOKEN_PATH):
-        with open(TOKEN_PATH, 'rb') as token:
-            creds = pickle.load(token)
-
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            try:
-                creds.refresh(Request())
-            except Exception as e:
-                st.error(f"Errore durante il refresh del token: {e}")
-                os.remove(TOKEN_PATH)
-                st.stop()
-        else:
-            try:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    '.streamlit/client_secret.json', SCOPES
-                )
-                auth_url, _ = flow.authorization_url(prompt='consent')
-                st.warning("🔐 Autenticazione richiesta")
-                st.markdown(f"[Clicca qui per autorizzare l'accesso a Google Drive]({auth_url})")
-                auth_code = st.text_input("🔑 Inserisci il codice di autorizzazione")
-
-                if st.button("Conferma codice"):
-                    try:
-                        flow.fetch_token(code=auth_code)
-                        creds = flow.credentials
-                        with open(TOKEN_PATH, 'wb') as token:
-                            pickle.dump(creds, token)
-                        st.success("✅ Autenticazione completata. Ricarica l'app.")
-                        st.experimental_rerun()
-                    except Exception as e:
-                        st.error(f"Errore durante l'autenticazione: {e}")
-                        st.stop()
-                else:
-                    st.stop()
-            except Exception as e:
-                st.error(f"Errore nel flusso di autenticazione: {e}")
-                st.stop()
-
-    return creds
-
 
 def get_drive_service():
     try:
-        creds = authenticate()
+        creds = Credentials.from_authorized_user_file(TOKEN_PATH, scopes=SCOPES)
         return build('drive', 'v3', credentials=creds)
     except Exception as e:
-        st.error("⚠️ Errore nella connessione a Google Drive.")
+        st.error("⚠️ Errore durante il caricamento delle credenziali.")
         st.exception(e)
         st.stop()
 
@@ -113,3 +65,4 @@ def download_pdf(service, file_id, local_path):
         except Exception as e:
             st.error(f"Errore durante il download del PDF: {e}")
             break
+
