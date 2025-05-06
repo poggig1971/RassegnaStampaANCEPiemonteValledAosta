@@ -66,7 +66,8 @@ def log_visualizzazione(username, filename):
 
     try:
         service = get_drive_service()
-        files = list_pdfs_in_folder(service)
+        results = service.files().list(q="trashed = false", fields="files(id, name)").execute()
+        files = results.get("files", [])
         file_id = next((f["id"] for f in files if f["name"] == "log_visualizzazioni.csv"), None)
 
         if file_id:
@@ -94,7 +95,8 @@ def mostra_statistiche():
     st.markdown("## 📈 Statistiche di accesso")
     try:
         service = get_drive_service()
-        files = list_pdfs_in_folder(service)
+        results = service.files().list(q="trashed = false", fields="files(id, name)").execute()
+        files = results.get("files", [])
         file_id = next((f["id"] for f in files if f["name"] == "log_visualizzazioni.csv"), None)
 
         if not file_id:
@@ -144,7 +146,8 @@ def dashboard():
 
     try:
         service = get_drive_service()
-        files = list_pdfs_in_folder(service)
+        results = service.files().list(q="trashed = false", fields="files(id, name)").execute()
+        files = results.get("files", [])
     except Exception as e:
         st.error("⚠️ Errore nella connessione a Google Drive.")
         return
@@ -221,3 +224,4 @@ def main():
                 st.warning("⚠️ Accesso riservato. Le statistiche sono visibili solo all'amministratore.")
 
 main()
+
