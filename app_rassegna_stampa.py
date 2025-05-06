@@ -1,6 +1,6 @@
 import streamlit as st 
 import os
-from datetime import datetime
+from datetime import datetime, date
 import pytz
 import pandas as pd
 from io import StringIO, BytesIO
@@ -152,6 +152,13 @@ def dashboard():
         st.error("⚠️ Errore nella connessione a Google Drive.")
         return
 
+    # Notifica rassegna odierna
+    oggi = date.today().strftime("%Y.%m.%d")
+    if any(f["name"] == f"{oggi}.pdf" for f in files):
+        st.success("✅ La rassegna di oggi è disponibile.")
+    else:
+        st.warning("📭 La rassegna di oggi non è ancora caricata.")
+
     st.caption(f"🕒 Ultimo aggiornamento: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
     if st.button("🔄 Aggiorna elenco PDF"):
         st.rerun()
@@ -190,10 +197,10 @@ def dashboard():
     for f in files:
         name = f["name"]
         if name.lower().endswith(".pdf") and is_valid_date_filename(name):
-            date = name.replace(".pdf", "")
-            if date not in seen:
-                seen.add(date)
-                date_options.append(date)
+            date_str = name.replace(".pdf", "")
+            if date_str not in seen:
+                seen.add(date_str)
+                date_options.append(date_str)
     date_options = sorted(date_options, reverse=True)
 
     if date_options:
@@ -214,8 +221,10 @@ def main():
         login()
     else:
         with st.sidebar:
-            st.markdown("## ⚙️ Pannello")
-            st.markdown(f"👤 Utente: **{st.session_state.username}**")
+            st.image("logo.png", width=120)
+            st.write("----")
+            st.success(f"👤 {st.session_state.username}")
+            st.write("---")
             page = st.radio("📋 Seleziona una pagina", ["Archivio", "Statistiche"])
             st.write("---")
             if st.button("🚪 Esci"):
