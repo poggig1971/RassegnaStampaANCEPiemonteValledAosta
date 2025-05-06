@@ -177,15 +177,15 @@ def dashboard():
         st.warning("📭 La rassegna di oggi non è ancora caricata.")
 
    if files:
-    date_strings = [
-        f["name"].replace(".pdf", "")
-        for f in files
-        if f["name"].lower().endswith(".pdf") and is_valid_date_filename(f["name"])
-    ]
-    most_recent = max(date_strings)
-    st.caption(f"🕒 Ultimo file disponibile: {most_recent}")
+        date_strings = [
+            f["name"].replace(".pdf", "")
+            for f in files
+            if f["name"].lower().endswith(".pdf") and is_valid_date_filename(f["name"])
+        ]
+        most_recent = max(date_strings)
+        st.caption(f"🕒 Ultimo file disponibile: {most_recent}")
     else:
-    st.caption("🕒 Nessun file PDF trovato su Google Drive.")
+        st.caption("🕒 Nessun file PDF trovato su Google Drive.")
 
     if st.button("🔄 Aggiorna elenco PDF"):
         st.rerun()
