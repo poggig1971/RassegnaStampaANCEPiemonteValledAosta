@@ -5,47 +5,8 @@ from datetime import date, datetime
 from pathlib import Path
 import csv
 import pytz
-
-import io
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseDownload
-
-SERVICE_ACCOUNT_FILE = 'service_account.json'
-FOLDER_ID = '1MWyOvL-d4IYWqMfqh2MxQMKfVx0uH4Qq'
-FILENAME = 'token_drive.pkl'
-LOCAL_PATH = 'token_drive.pkl'
-
-def download_token_drive():
-    creds = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE,
-        scopes=['https://www.googleapis.com/auth/drive']
-    )
-    service = build('drive', 'v3', credentials=creds)
-
-    query = f"name='{FILENAME}' and '{FOLDER_ID}' in parents and trashed=false"
-    results = service.files().list(q=query, fields="files(id, name)").execute()
-    items = results.get('files', [])
-
-    if not items:
-        print("❌ token_drive.pkl non trovato su Drive.")
-        return False
-
-    file_id = items[0]['id']
-    request = service.files().get_media(fileId=file_id)
-    fh = io.FileIO(LOCAL_PATH, 'wb')
-    downloader = MediaIoBaseDownload(fh, request)
-    done = False
-    while not done:
-        status, done = downloader.next_chunk()
-
-    print("✅ token_drive.pkl scaricato correttamente.")
-    return True
-
-if not os.path.exists(LOCAL_PATH):
-    success = download_token_drive()
-    if not success:
-        raise FileNotFoundError("Impossibile avviare: token_drive.pkl non trovato.")
+import pandas as pd
+import matplotlib.pyplot as plt
 
 from drive_utils import (
     get_drive_service,
@@ -213,6 +174,39 @@ def dashboard():
         st.info("📭 Nessun file PDF trovato su Google Drive.")
 
 
+def mostra_statistiche():
+    st.markdown("## 📈 Statistiche di accesso")
+
+    if not os.path.exists("log_visualizzazioni.csv"):
+        st.info("Nessun dato ancora disponibile.")
+        return
+
+    df = pd.read_csv("log_visualizzazioni.csv")
+
+    st.metric("Totale visualizzazioni", len(df))
+
+    top_utenti = df['utente'].value_counts().head(5)
+    st.markdown("### 👥 Utenti più attivi")
+    st.bar_chart(top_utenti)
+
+    top_file = df['file'].value_counts().head(5)
+    st.markdown("### 📁 File più visualizzati")
+    st.bar_chart(top_file)
+
+    df['data'] = pd.to_datetime(df['data'])
+
+    # Filtra gli ultimi 30 giorni
+    oggi = pd.to_datetime(datetime.now().date())
+    ultimi_30 = df[df['data'] >= oggi - pd.Timedelta(days=30)]
+
+    if ultimi_30.empty:
+        st.info("📭 Nessun accesso negli ultimi 30 giorni.")
+    else:
+        st.markdown("### 📆 Accessi negli ultimi 30 giorni")
+        daily = ultimi_30.groupby('data').size()
+        st.line_chart(daily)
+
+
 def main():
     if not st.session_state.logged_in:
         login()
@@ -220,12 +214,16 @@ def main():
         with st.sidebar:
             st.markdown("## ⚙️ Pannello")
             st.markdown(f"👤 Utente: **{st.session_state.username}**")
+            page = st.radio("📋 Seleziona una pagina", ["Archivio", "Statistiche"])
             st.write("---")
             if st.button("🚪 Esci"):
                 st.session_state.clear()
                 st.rerun()
-        dashboard()
+
+        if page == "Archivio":
+            dashboard()
+        elif page == "Statistiche":
+            mostra_statistiche()
 
 
 main()
-
