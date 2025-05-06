@@ -185,17 +185,16 @@ def dashboard():
                 st.success(f"✅ File '{file_to_delete}' eliminato da Google Drive.")
                 st.rerun()
 
-    
     seen = set()
-date_options = []
-for f in files:
-    name = f["name"]
-    if name.lower().endswith(".pdf") and is_valid_date_filename(name):
-        date = name.replace(".pdf", "")
-        if date not in seen:
-            seen.add(date)
-            date_options.append(date)
-date_options = sorted(date_options, reverse=True)
+    date_options = []
+    for f in files:
+        name = f["name"]
+        if name.lower().endswith(".pdf") and is_valid_date_filename(name):
+            date = name.replace(".pdf", "")
+            if date not in seen:
+                seen.add(date)
+                date_options.append(date)
+    date_options = sorted(date_options, reverse=True)
 
     if date_options:
         selected_date = st.selectbox("🗓️ Seleziona una data", date_options)
@@ -231,4 +230,3 @@ def main():
                 st.warning("⚠️ Accesso riservato. Le statistiche sono visibili solo all'amministratore.")
 
 main()
-
