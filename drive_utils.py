@@ -10,7 +10,7 @@ print("✅ drive_utils.py caricato correttamente (versione cloud)")
 
 # === CONFIGURAZIONE ===
 SCOPES = ['https://www.googleapis.com/auth/drive.file']
-FOLDER_NAME = "Rassegna ANCE"
+FOLDER_ID = "1eehj6KKG3W6bGdiT10ct4_-HFzLtD_p3"  # ID cartella Archivio Rassegna
 
 def get_drive_service():
     try:
@@ -25,22 +25,9 @@ def get_drive_service():
         st.exception(e)
         st.stop()
 
-def get_or_create_folder(service, folder_name):
-    query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
-    results = service.files().list(q=query, spaces='drive', fields='files(id, name)').execute()
-    items = results.get('files', [])
-    if items:
-        return items[0]['id']
-    file_metadata = {
-        'name': folder_name,
-        'mimeType': 'application/vnd.google-apps.folder'
-    }
-    folder = service.files().create(body=file_metadata, fields='id').execute()
-    return folder.get('id')
-
-def upload_pdf_to_drive(service, folder_id, file_obj, drive_filename, is_memory_file=False, overwrite=False):
+def upload_pdf_to_drive(service, file_obj, drive_filename, is_memory_file=False, overwrite=False):
     existing_files = service.files().list(
-        q=f"'{folder_id}' in parents and name='{drive_filename}' and trashed=false",
+        q=f"'{FOLDER_ID}' in parents and name='{drive_filename}' and trashed=false",
         fields='files(id, name)'
     ).execute().get("files", [])
 
@@ -55,7 +42,7 @@ def upload_pdf_to_drive(service, folder_id, file_obj, drive_filename, is_memory_
 
     file_metadata = {
         'name': drive_filename,
-        'parents': [folder_id]
+        'parents': [FOLDER_ID]
     }
 
     if is_memory_file:
@@ -72,8 +59,8 @@ def upload_pdf_to_drive(service, folder_id, file_obj, drive_filename, is_memory_
     file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
     return file.get('id')
 
-def list_pdfs_in_folder(service, folder_id):
-    query = f"'{folder_id}' in parents and mimeType='application/pdf' and trashed=false"
+def list_pdfs_in_folder(service):
+    query = f"'{FOLDER_ID}' in parents and mimeType='application/pdf' and trashed=false"
     results = service.files().list(q=query, fields="files(id, name)").execute()
     files = results.get('files', [])
     return sorted(files, key=lambda x: x['name'])
@@ -99,4 +86,33 @@ def download_pdf(service, file_id, local_path=None, return_bytes=False):
         fh.seek(0)
         return fh.read()
 
+def append_log_entry(service, user_email, file_uploaded):
+    import datetime
 
+    log_filename = "log_accessi.txt"
+    query = f"'{FOLDER_ID}' in parents and name='{log_filename}' and trashed=false"
+    results = service.files().list(q=query, fields="files(id, name)").execute()
+    files = results.get('files', [])
+
+    log_content = ""
+    log_line = f"{datetime.datetime.now().isoformat()} - {user_email} ha caricato {file_uploaded}\n"
+
+    if files:
+        log_file_id = files[0]['id']
+        request = service.files().get_media(fileId=log_file_id)
+        fh = io.BytesIO()
+        downloader = MediaIoBaseDownload(fh, request)
+        done = False
+        while not done:
+            _, done = downloader.next_chunk()
+        log_content = fh.getvalue().decode("utf-8")
+        service.files().delete(fileId=log_file_id).execute()
+
+    updated_content = log_content + log_line
+    media = MediaIoBaseUpload(io.BytesIO(updated_content.encode("utf-8")), mimetype="text/plain")
+
+    service.files().create(
+        body={'name': log_filename, 'parents': [FOLDER_ID]},
+        media_body=media,
+        fields='id'
+    ).execute()
