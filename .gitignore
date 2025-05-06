@@ -2,3 +2,4 @@
 
 temp_pdfs/
 __pycache__/
+echo "service_account.json" >> .gitignore
