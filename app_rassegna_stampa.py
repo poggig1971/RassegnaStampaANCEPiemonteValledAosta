@@ -169,14 +169,13 @@ def dashboard():
         st.error("⚠️ Errore nella connessione a Google Drive.")
         return
 
-    # Notifica rassegna odierna
     oggi = date.today().strftime("%Y.%m.%d")
     if any(f["name"] == f"{oggi}.pdf" for f in files):
         st.success("✅ La rassegna di oggi è disponibile.")
     else:
         st.warning("📭 La rassegna di oggi non è ancora caricata.")
 
-   if files:
+    if files:
         date_strings = [
             f["name"].replace(".pdf", "")
             for f in files
