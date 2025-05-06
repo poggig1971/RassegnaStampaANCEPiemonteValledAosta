@@ -1,9 +1,9 @@
 import os
 import io
-from google.oauth2.credentials import Credentials
+import pickle
+import streamlit as st
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
-import streamlit as st
 
 print("✅ drive_utils.py caricato correttamente")
 
@@ -14,13 +14,13 @@ FOLDER_NAME = "Rassegna ANCE"
 
 def get_drive_service():
     try:
-        creds = Credentials.from_authorized_user_file(TOKEN_PATH, scopes=SCOPES)
+        with open(TOKEN_PATH, 'rb') as token:
+            creds = pickle.load(token)
         return build('drive', 'v3', credentials=creds)
     except Exception as e:
-        st.error("⚠️ Errore durante il caricamento delle credenziali.")
+        st.error("⚠️ Errore durante il caricamento del token pickle.")
         st.exception(e)
         st.stop()
-
 
 def get_or_create_folder(service, folder_name):
     query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
@@ -36,7 +36,6 @@ def get_or_create_folder(service, folder_name):
     folder = service.files().create(body=file_metadata, fields='id').execute()
     return folder.get('id')
 
-
 def upload_pdf_to_drive(service, folder_id, local_path, drive_filename):
     file_metadata = {
         'name': drive_filename,
@@ -46,13 +45,11 @@ def upload_pdf_to_drive(service, folder_id, local_path, drive_filename):
     file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
     return file.get('id')
 
-
 def list_pdfs_in_folder(service, folder_id):
     query = f"'{folder_id}' in parents and mimeType='application/pdf' and trashed=false"
     results = service.files().list(q=query, fields="files(id, name)").execute()
     files = results.get('files', [])
     return sorted(files, key=lambda x: x['name'])
-
 
 def download_pdf(service, file_id, local_path):
     request = service.files().get_media(fileId=file_id)
@@ -65,4 +62,3 @@ def download_pdf(service, file_id, local_path):
         except Exception as e:
             st.error(f"Errore durante il download del PDF: {e}")
             break
-
