@@ -151,6 +151,14 @@ def dashboard():
 
 def mostra_statistiche():
     st.markdown("## 📈 Statistiche di accesso")
+    if st.session_state.username == "Admin" and os.path.exists("log_visualizzazioni.csv"):
+    with open("log_visualizzazioni.csv", "rb") as f:
+        st.download_button(
+            label="⬇️ Scarica log visualizzazioni (CSV)",
+            data=f,
+            file_name="log_visualizzazioni.csv",
+            mime="text/csv"
+        )
     if not os.path.exists("log_visualizzazioni.csv"):
         st.info("Nessun dato ancora disponibile.")
         return
