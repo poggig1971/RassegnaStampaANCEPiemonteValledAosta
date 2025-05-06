@@ -1,5 +1,5 @@
 *.pkl
-
+service_account.json
+log_visualizzazioni.csv
 temp_pdfs/
 __pycache__/
-echo "service_account.json" >> .gitignore
