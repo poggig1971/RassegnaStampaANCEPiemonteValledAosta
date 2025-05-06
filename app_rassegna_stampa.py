@@ -169,7 +169,7 @@ def dashboard():
         st.error("⚠️ Errore nella connessione a Google Drive.")
         return
 
-    oggi = date.today().strftime("%Y.%m.%d")
+    oggi = datetime.now(pytz.timezone("Europe/Rome")).strftime("%Y.%m.%d")
     if any(f["name"] == f"{oggi}.pdf" for f in files):
         st.success("✅ La rassegna di oggi è disponibile.")
     else:
