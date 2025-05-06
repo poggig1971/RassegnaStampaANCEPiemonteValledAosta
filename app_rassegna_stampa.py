@@ -127,9 +127,8 @@ def dashboard():
                 if filename in existing_filenames:
                     st.warning(f"❗ Il file '{filename}' è già presente su Drive.")
                     continue
-                with open(filename, "wb") as f:
-                    f.write(uploaded_file.getbuffer())
-                upload_pdf_to_drive(service, folder_id, filename, filename)
+                file_bytes = BytesIO(uploaded_file.getbuffer())
+                upload_pdf_to_drive(service, folder_id, file_bytes, filename, is_memory_file=True)
                 st.success(f"✅ Caricato: {filename}")
             st.rerun()
 
@@ -225,5 +224,6 @@ def main():
                 st.warning("⚠️ Accesso riservato. Le statistiche sono visibili solo all'amministratore.")
 
 main()
+
 
 
