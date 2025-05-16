@@ -172,7 +172,7 @@ def mostra_statistiche():
             st.markdown("### 📅 Accessi ultimi 30 giorni")
             st.line_chart(ultimi_30.groupby('data').size())
 
-        # HEATMAP accessi settimanali per fascia oraria
+       # HEATMAP accessi settimanali per fascia oraria
         st.markdown("### 🕒 Heatmap accessi settimanali per fascia oraria")
         df['giorno_settimana'] = df['data'].dt.day_name()
         df['ora'] = df['data'].dt.hour
@@ -190,14 +190,26 @@ def mostra_statistiche():
         df['fascia'] = df['ora'].apply(fascia_oraria)
         heatmap_data = df.groupby(['giorno_settimana', 'fascia']).size().unstack(fill_value=0)
         giorni_ordine = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-        heatmap_data = heatmap_data.reindex(giorni_ordine)
+        fasce_ordine = ['Notte', 'Mattino', 'Pomeriggio', 'Sera']
+        heatmap_data = heatmap_data.reindex(giorni_ordine).reindex(columns=fasce_ordine)
 
         import matplotlib.pyplot as plt
-        import seaborn as sns
+        import numpy as np
 
         fig, ax = plt.subplots(figsize=(8, 5))
-        sns.heatmap(heatmap_data, annot=True, fmt="d", cmap="YlOrRd", ax=ax)
+        im = ax.imshow(heatmap_data.values, cmap="YlOrRd")
+
+        ax.set_xticks(np.arange(len(heatmap_data.columns)))
+        ax.set_yticks(np.arange(len(heatmap_data.index)))
+        ax.set_xticklabels(heatmap_data.columns)
+        ax.set_yticklabels(heatmap_data.index)
+
+        for i in range(len(heatmap_data.index)):
+            for j in range(len(heatmap_data.columns)):
+                text = ax.text(j, i, heatmap_data.values[i, j], ha="center", va="center", color="black")
+
         ax.set_title("Accessi per giorno e fascia oraria")
+        fig.tight_layout()
         st.pyplot(fig)
 
     except Exception as e:
