@@ -222,6 +222,18 @@ def main():
                 else:
                     st.info("ℹ️ Nessun altro utente da eliminare.")
 
+                try:
+                    files = service.files().list(q="trashed = false", fields="files(id, name)").execute().get("files", [])
+                    file_id = next((f["id"] for f in files if f["name"] == "utenti.csv"), None)
+                    if file_id:
+                        content = download_pdf(service, file_id, return_bytes=True)
+                        st.download_button("⬇️ Scarica utenti.csv", data=content, file_name="utenti.csv")
+                except Exception as e:
+                    st.error(f"Errore nel download del file utenti: {e}")
+
+
+
+                
                 st.subheader("📋 Elenco utenti attivi")
                 if users:
                     df_utenti = pd.DataFrame.from_dict(users, orient="index")
