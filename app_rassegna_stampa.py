@@ -96,83 +96,75 @@ def main():
                 st.session_state.clear()
                 st.rerun()
 
-            if user == "Admin":
-                if not users:
-                    st.info("📂 Nessun file utenti.csv trovato. Puoi crearne uno ora.")
-                    if st.button("🆕 Crea file utenti.csv di default"):
-                        users = {
-                            "Admin": {
-                                "password": "CorsoDuca15",
-                                "password_cambiata": "no",
-                                "data_modifica": "2025-05-16"
-                            }
-                        }
-                        write_users_file(service, users)
-                        st.success("✅ File utenti.csv creato con successo.")
-                        st.rerun()
+if user == "Admin":
+    if not users:
+        st.info("📂 Nessun file utenti.csv trovato. Puoi crearne uno ora.")
+        if st.button("🆕 Crea file utenti.csv di default"):
+            users = {
+                "Admin": {
+                    "password": "CorsoDuca15",
+                    "password_cambiata": "no",
+                    "data_modifica": "2025-05-16"
+                }
+            }
+            write_users_file(service, users)
+            st.success("✅ File utenti.csv creato con successo.")
+            st.rerun()
 
-                with st.expander("👥 Gestione utenti"):
-                    st.subheader("➕ Aggiungi o aggiorna utente")
-                    nuovo_user = st.text_input("👤 Username")
-                    nuova_pw = st.text_input("🔑 Password", type="password")
-                    if st.button("📏 Salva utente"):
-                        if not nuovo_user or not nuova_pw:
-                            st.warning("⚠️ Inserire sia username che password.")
-                        else:
-                            update_user_password(service, users, nuovo_user, nuova_pw)
-                            st.success(f"Utente '{nuovo_user}' aggiunto o aggiornato.")
-                            st.rerun()
-
-                    st.subheader("🛑 Elimina utente")
-                    utenti_eliminabili = sorted([u for u in users if u != "Admin"])
-                    if utenti_eliminabili:
-                        user_to_delete = st.selectbox("Seleziona utente da rimuovere", utenti_eliminabili)
-                        if st.button("❌ Elimina selezionato"):
-                            delete_user(service, users, user_to_delete)
-                            st.warning(f"Utente '{user_to_delete}' rimosso.")
-                            st.rerun()
-                    else:
-                        st.info("ℹ️ Nessun altro utente da eliminare.")
-
-                    st.subheader("📋 Elenco utenti attivi")
-                    if users:
-                        df_utenti = pd.DataFrame.from_dict(users, orient="index")
-                        df_utenti.index.name = "Username"
-                        df_utenti = df_utenti.reset_index()
-                        st.dataframe(df_utenti)
-                    else:
-                        st.info("🔍 Nessun utente registrato.")
-            
-            st.markdown("### 🔁 Carica nuovo file utenti.csv")
-uploaded = st.file_uploader("Scegli file utenti.csv", type="csv")
-if uploaded:
-    upload_pdf_to_drive(service, uploaded, "utenti.csv", is_memory_file=True, overwrite=True)
-    st.success("✅ utenti.csv aggiornato.")
-    st.rerun()
-            
-            
+    with st.expander("👥 Gestione utenti"):
+        st.subheader("➕ Aggiungi o aggiorna utente")
+        nuovo_user = st.text_input("👤 Username")
+        nuova_pw = st.text_input("🔑 Password", type="password")
+        if st.button("📏 Salva utente"):
+            if not nuovo_user or not nuova_pw:
+                st.warning("⚠️ Inserire sia username che password.")
             else:
-                with st.expander("🔑 Cambia password"):
-                    old = st.text_input("Vecchia password", type="password", key="old")
-                    new = st.text_input("Nuova password", type="password", key="new")
-                    conf = st.text_input("Conferma nuova password", type="password", key="conf")
-                    if st.button("Salva nuova password"):
-                        if old != users[user]["password"]:
-                            st.error("❌ Vecchia password errata.")
-                        elif new != conf:
-                            st.warning("⚠️ Le nuove password non coincidono.")
-                        else:
-                            update_user_password(service, users, user, new)
-                            st.success("✅ Password aggiornata.")
-                            st.rerun()
+                update_user_password(service, users, nuovo_user, nuova_pw)
+                st.success(f"Utente '{nuovo_user}' aggiunto o aggiornato.")
+                st.rerun()
 
-        if page == "Archivio":
-            dashboard()
-        elif page == "Statistiche":
-            if user == "Admin":
-                mostra_statistiche()
+        st.subheader("🛑 Elimina utente")
+        utenti_eliminabili = sorted([u for u in users if u != "Admin"])
+        if utenti_eliminabili:
+            user_to_delete = st.selectbox("Seleziona utente da rimuovere", utenti_eliminabili)
+            if st.button("❌ Elimina selezionato"):
+                delete_user(service, users, user_to_delete)
+                st.warning(f"Utente '{user_to_delete}' rimosso.")
+                st.rerun()
+        else:
+            st.info("ℹ️ Nessun altro utente da eliminare.")
+
+        st.subheader("📋 Elenco utenti attivi")
+        if users:
+            df_utenti = pd.DataFrame.from_dict(users, orient="index")
+            df_utenti.index.name = "Username"
+            df_utenti = df_utenti.reset_index()
+            st.dataframe(df_utenti)
+        else:
+            st.info("🔍 Nessun utente registrato.")
+
+        st.markdown("### 🔁 Carica nuovo file utenti.csv")
+        uploaded = st.file_uploader("Scegli file utenti.csv", type="csv")
+        if uploaded:
+            upload_pdf_to_drive(service, uploaded, "utenti.csv", is_memory_file=True, overwrite=True)
+            st.success("✅ utenti.csv aggiornato.")
+            st.rerun()
+
+else:
+    with st.expander("🔑 Cambia password"):
+        old = st.text_input("Vecchia password", type="password", key="old")
+        new = st.text_input("Nuova password", type="password", key="new")
+        conf = st.text_input("Conferma nuova password", type="password", key="conf")
+        if st.button("Salva nuova password"):
+            if old != users[user]["password"]:
+                st.error("❌ Vecchia password errata.")
+            elif new != conf:
+                st.warning("⚠️ Le nuove password non coincidono.")
             else:
-                st.warning("⚠️ Accesso riservato. Le statistiche sono visibili solo all'amministratore.")
+                update_user_password(service, users, user, new)
+                st.success("✅ Password aggiornata.")
+                st.rerun()
+
 
 def dashboard():
     st.image("logo.png", width=200)
