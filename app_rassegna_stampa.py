@@ -180,24 +180,7 @@ def main():
                 mostra_statistiche()
             else:
                 st.warning("⚠️ Accesso riservato. Le statistiche sono visibili solo all'amministratore.")
-        elif page == "Profilo":
-            with st.expander("🔑 Cambia password"):
-                old = st.text_input("Vecchia password", type="password", key="old")
-                new = st.text_input("Nuova password", type="password", key="new")
-                conf = st.text_input("Conferma nuova password", type="password", key="conf")
-                if st.button("Salva nuova password"):
-                    if old != users[user]["password"]:
-                        st.error("❌ Vecchia password errata.")
-                    elif new != conf:
-                        st.warning("⚠️ Le nuove password non coincidono.")
-                    else:
-                        update_user_password(service, users, user, new)
-                        st.success("✅ Password aggiornata.")
-                        st.rerun()
-
-
-
-
+    
 def dashboard():
     st.image("logo.png", width=200)
     st.markdown(f"### 👋 Benvenuto {st.session_state.username}!")
