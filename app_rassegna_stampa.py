@@ -202,7 +202,35 @@ def dashboard():
 
 def mostra_statistiche():
     st.markdown("### 📊 Area Statistiche")
-    st.info("Questa sezione mostrerà le statistiche degli accessi e dei caricamenti.")
+    try:
+        service = get_drive_service()
+        files = service.files().list(q="trashed = false", fields="files(id, name)").execute().get("files", [])
+        file_id = next((f["id"] for f in files if f["name"] == "log_visualizzazioni.csv"), None)
+        if not file_id:
+            st.info("📭 Nessun log disponibile.")
+            return
+
+        content = download_pdf(service, file_id, return_bytes=True).decode("utf-8")
+        df = pd.read_csv(StringIO(content))
+
+        st.metric("Totale visualizzazioni", len(df))
+
+        top_utenti = df['utente'].value_counts().head(5)
+        st.markdown("### 👥 Utenti più attivi")
+        st.bar_chart(top_utenti)
+
+        top_file = df['file'].value_counts().head(5)
+        st.markdown("### 📁 File più visualizzati")
+        st.bar_chart(top_file)
+
+        df['data'] = pd.to_datetime(df['data'])
+        ultimi_30 = df[df['data'] >= datetime.now() - pd.Timedelta(days=30)]
+        if not ultimi_30.empty:
+            st.markdown("### 📅 Accessi ultimi 30 giorni")
+            st.line_chart(ultimi_30.groupby('data').size())
+
+    except Exception as e:
+        st.error(f"❌ Errore durante il caricamento delle statistiche: {e}")
 
 main()
 
