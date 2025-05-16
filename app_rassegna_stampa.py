@@ -56,12 +56,14 @@ def login():
                 st.session_state.user_data = user_data
                 st.success("✅ Accesso effettuato")
                 st.rerun()
+                st.stop()  # ← aggiungi sempre questo dopo il rerun
             elif not user_data and username == "Admin" and password == "CorsoDuca15":
                 st.session_state.logged_in = True
                 st.session_state.username = username
                 st.session_state.user_data = {}
                 st.warning("⚠️ File utenti.csv assente o vuoto. Accesso amministratore d’emergenza.")
                 st.rerun()
+                st.stop()  # ← aggiungi sempre questo dopo il rerun
             else:
                 st.error("❌ Credenziali non valide. Riprova.")
         except Exception:
@@ -71,6 +73,7 @@ def login():
                 st.session_state.user_data = {}
                 st.warning("⚠️ Errore nella lettura del file utenti. Accesso amministratore d’emergenza.")
                 st.rerun()
+                st.stop()  # ← aggiungi sempre questo dopo il rerun
             else:
                 st.error("❌ Errore durante il login.")
 
@@ -107,6 +110,7 @@ def main():
                         write_users_file(service, users)
                         st.success("✅ File utenti.csv creato con successo.")
                         st.rerun()
+                        st.stop()  # ← aggiungi sempre questo dopo il rerun
 
                 st.subheader("➕ Aggiungi o aggiorna utente")
                 nuovo_user = st.text_input("👤 Username")
@@ -118,6 +122,7 @@ def main():
                         update_user_password(service, users, nuovo_user, nuova_pw)
                         st.success(f"Utente '{nuovo_user}' aggiunto o aggiornato.")
                         st.rerun()
+                        st.stop()  # ← aggiungi sempre questo dopo il rerun
 
                 st.subheader("🛑 Elimina utente")
                 utenti_eliminabili = sorted([u for u in users if u != "Admin"])
@@ -127,6 +132,7 @@ def main():
                         delete_user(service, users, user_to_delete)
                         st.warning(f"Utente '{user_to_delete}' rimosso.")
                         st.rerun()
+                        st.stop()  # ← aggiungi sempre questo dopo il rerun
                 else:
                     st.info("ℹ️ Nessun altro utente da eliminare.")
 
@@ -145,10 +151,12 @@ def main():
                     upload_pdf_to_drive(service, uploaded, "utenti.csv", is_memory_file=True, overwrite=True)
                     st.success("✅ utenti.csv aggiornato.")
                     st.rerun()
+                    st.stop()  # ← aggiungi sempre questo dopo il rerun
 
             if st.button("🚪 Esci"):
                 st.session_state.clear()
                 st.rerun()
+                st.stop()  # ← aggiungi sempre questo dopo il rerun
 
         if page == "Archivio":
             dashboard()
@@ -171,6 +179,7 @@ def main():
                         update_user_password(service, users, user, new)
                         st.success("✅ Password aggiornata.")
                         st.rerun()
+                        st.stop()  # ← aggiungi sempre questo dopo il rerun
 def dashboard():
     st.image("logo.png", width=200)
     st.markdown(f"### 👋 Benvenuto {st.session_state.username}!")
@@ -205,6 +214,7 @@ def dashboard():
                     upload_pdf_to_drive(service, uploaded_file, uploaded_file.name, is_memory_file=True)
                     st.success(f"✅ Caricato: {uploaded_file.name}")
                 st.rerun()
+                st.stop()  # ← aggiungi sempre questo dopo il rerun
 
             st.markdown("### 🗑️ Elimina file")
             file_to_delete = st.selectbox("Seleziona file da eliminare", file_names, key="selectbox_elimina")
@@ -214,6 +224,8 @@ def dashboard():
                     service.files().delete(fileId=file_id).execute()
                     st.success(f"✅ File '{file_to_delete}' eliminato.")
                     st.rerun()
+                    st.stop()  # ← aggiungi sempre questo dopo il rerun
+                    
     except Exception as e:
         st.error(f"Errore durante il caricamento dei file: {e}")
 
