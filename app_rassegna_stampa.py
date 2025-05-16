@@ -90,7 +90,7 @@ def main():
             st.write("----")
             st.success(f"👤 {user}")
             st.write("---")
-            page = st.radio("📋 Seleziona una pagina", ["Archivio", "Statistiche"])
+            page = st.radio("📋 Seleziona una pagina", ["Archivio", "Statistiche", "Profilo"])
             st.write("---")
             if st.button("🚪 Esci"):
                 st.session_state.clear()
@@ -150,7 +150,14 @@ def main():
                     st.success("✅ utenti.csv aggiornato.")
                     st.rerun()
 
-        else:
+        if page == "Archivio":
+            dashboard()
+        elif page == "Statistiche":
+            if user == "Admin":
+                mostra_statistiche()
+            else:
+                st.warning("⚠️ Accesso riservato. Le statistiche sono visibili solo all'amministratore.")
+        elif page == "Profilo":
             with st.expander("🔑 Cambia password"):
                 old = st.text_input("Vecchia password", type="password", key="old")
                 new = st.text_input("Nuova password", type="password", key="new")
@@ -165,13 +172,6 @@ def main():
                         st.success("✅ Password aggiornata.")
                         st.rerun()
 
-        if page == "Archivio":
-            dashboard()
-        elif page == "Statistiche":
-            if user == "Admin":
-                mostra_statistiche()
-            else:
-                st.warning("⚠️ Accesso riservato. Le statistiche sono visibili solo all'amministratore.")
 
 
 
