@@ -114,7 +114,7 @@ def main():
                     st.subheader("➕ Aggiungi o aggiorna utente")
                     nuovo_user = st.text_input("👤 Username")
                     nuova_pw = st.text_input("🔑 Password", type="password")
-                    if st.button("💾 Salva utente"):
+                    if st.button("📏 Salva utente"):
                         if not nuovo_user or not nuova_pw:
                             st.warning("⚠️ Inserire sia username che password.")
                         else:
@@ -122,7 +122,7 @@ def main():
                             st.success(f"Utente '{nuovo_user}' aggiunto o aggiornato.")
                             st.rerun()
 
-                    st.subheader("🗑️ Elimina utente")
+                    st.subheader("🛑 Elimina utente")
                     utenti_eliminabili = sorted([u for u in users if u != "Admin"])
                     if utenti_eliminabili:
                         user_to_delete = st.selectbox("Seleziona utente da rimuovere", utenti_eliminabili)
@@ -141,7 +141,6 @@ def main():
                         st.dataframe(df_utenti)
                     else:
                         st.info("🔍 Nessun utente registrato.")
-
             else:
                 with st.expander("🔑 Cambia password"):
                     old = st.text_input("Vecchia password", type="password", key="old")
@@ -166,4 +165,5 @@ def main():
                 st.warning("⚠️ Accesso riservato. Le statistiche sono visibili solo all'amministratore.")
 
 main()
+
 
