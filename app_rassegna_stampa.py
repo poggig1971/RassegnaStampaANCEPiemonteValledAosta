@@ -165,7 +165,7 @@ def mostra_statistiche():
         top_file = df['file'].value_counts().head(5)
         st.markdown("### 📁 File più visualizzati")
         st.bar_chart(top_file)
-
+        df = pd.read_csv(StringIO(content))
         df['data'] = pd.to_datetime(df['data'] + ' ' + df['ora'])
         ultimi_30 = df[df['data'] >= datetime.now() - pd.Timedelta(days=30)]
         if not ultimi_30.empty:
