@@ -48,24 +48,31 @@ def login():
     password = st.text_input("🔑 Password", type="password", key="password_input")
     if st.button("Accedi"):
         service = get_drive_service()
-        user_data = read_users_file(service)
-        if username in user_data and user_data[username]["password"] == password:
-            st.session_state.logged_in = True
-            st.session_state.username = username
-            st.session_state.user_data = user_data
-            st.success("✅ Accesso effettuato")
-            st.rerun()
-        else:
-            st.error("❌ Credenziali non valide. Riprova.")
-
-def is_valid_date_filename(filename):
-    try:
-        datetime.strptime(filename.replace(".pdf", ""), "%Y.%m.%d")
-        return True
-    except ValueError:
-        return False
-
-# dashboard() e mostra_statistiche() restano invariati
+        try:
+            user_data = read_users_file(service)
+            if username in user_data and user_data[username]["password"] == password:
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.session_state.user_data = user_data
+                st.success("✅ Accesso effettuato")
+                st.rerun()
+            elif not user_data and username == "Admin" and password == "CorsoDuca15":
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.session_state.user_data = {}
+                st.warning("⚠️ File utenti.csv assente o vuoto. Accesso amministratore d’emergenza.")
+                st.rerun()
+            else:
+                st.error("❌ Credenziali non valide. Riprova.")
+        except Exception:
+            if username == "Admin" and password == "CorsoDuca15":
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.session_state.user_data = {}
+                st.warning("⚠️ Errore nella lettura del file utenti. Accesso amministratore d’emergenza.")
+                st.rerun()
+            else:
+                st.error("❌ Errore durante il login.")
 
 def main():
     if not st.session_state.logged_in:
@@ -73,7 +80,10 @@ def main():
     else:
         user = st.session_state.username
         service = get_drive_service()
-        users = read_users_file(service)
+        try:
+            users = read_users_file(service)
+        except:
+            users = {}
 
         with st.sidebar:
             st.image("logo.png", width=120)
@@ -87,6 +97,20 @@ def main():
                 st.rerun()
 
             if user == "Admin":
+                if not users:
+                    st.info("📂 Nessun file utenti.csv trovato. Puoi crearne uno ora.")
+                    if st.button("🆕 Crea file utenti.csv di default"):
+                        users = {
+                            "Admin": {
+                                "password": "CorsoDuca15",
+                                "password_cambiata": "no",
+                                "data_modifica": "2025-05-16"
+                            }
+                        }
+                        write_users_file(service, users)
+                        st.success("✅ File utenti.csv creato con successo.")
+                        st.rerun()
+
                 with st.expander("👥 Gestione utenti"):
                     st.subheader("➕ Aggiungi o aggiorna utente")
                     nuovo_user = st.text_input("👤 Username")
