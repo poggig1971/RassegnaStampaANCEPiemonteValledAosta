@@ -198,8 +198,12 @@ def dashboard():
         else:
             st.warning("📭 La rassegna di oggi non è ancora stata caricata.")
 
-        # SELECTBOX per visualizzazione
-        selected_file = st.selectbox("🗂️ Seleziona un file da visualizzare", file_names, key="selectbox_visualizza")
+        # SELECTBOX per visualizzazione (key univoco)
+        selected_file = st.selectbox(
+            "🗂️ Seleziona un file da visualizzare",
+            file_names,
+            key=f"selectbox_visualizza_{st.session_state.username}"
+        )
         file_id = next((file["id"] for file in files if file["name"] == selected_file), None)
         if file_id:
             content = download_pdf(service, file_id, return_bytes=True)
@@ -214,18 +218,22 @@ def dashboard():
                     upload_pdf_to_drive(service, uploaded_file, uploaded_file.name, is_memory_file=True)
                     st.success(f"✅ Caricato: {uploaded_file.name}")
                 st.rerun()
-                st.stop()  # ← aggiungi sempre questo dopo il rerun
+                st.stop()  # evita doppio rendering
 
             st.markdown("### 🗑️ Elimina file")
-            file_to_delete = st.selectbox("Seleziona file da eliminare", file_names, key="selectbox_elimina")
+            file_to_delete = st.selectbox(
+                "Seleziona file da eliminare",
+                file_names,
+                key=f"selectbox_elimina_{st.session_state.username}"
+            )
             if st.button("Elimina selezionato"):
                 file_id = next((file["id"] for file in files if file["name"] == file_to_delete), None)
                 if file_id:
                     service.files().delete(fileId=file_id).execute()
                     st.success(f"✅ File '{file_to_delete}' eliminato.")
                     st.rerun()
-                    st.stop()  # ← aggiungi sempre questo dopo il rerun
-                    
+                    st.stop()
+
     except Exception as e:
         st.error(f"Errore durante il caricamento dei file: {e}")
 
