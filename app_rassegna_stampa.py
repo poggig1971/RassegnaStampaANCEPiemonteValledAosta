@@ -201,14 +201,14 @@ def mostra_statistiche():
 
         ax.set_xticks(np.arange(len(heatmap_data.columns)))
         ax.set_yticks(np.arange(len(heatmap_data.index)))
-        ax.set_xticklabels(heatmap_data.columns)
-        ax.set_yticklabels(heatmap_data.index)
+        ax.set_xticklabels(heatmap_data.columns, fontsize=8)
+        ax.set_yticklabels(heatmap_data.index, fontsize=8)
 
         for i in range(len(heatmap_data.index)):
             for j in range(len(heatmap_data.columns)):
                 text = ax.text(j, i, heatmap_data.values[i, j], ha="center", va="center", color="black")
 
-        ax.set_title("Accessi per giorno e fascia oraria")
+        ax.set_title("Accessi per giorno e fascia oraria", fontsize=10)
         fig.tight_layout()
         st.pyplot(fig)
 
