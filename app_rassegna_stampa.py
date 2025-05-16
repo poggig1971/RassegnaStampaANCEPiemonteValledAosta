@@ -49,6 +49,23 @@ if "logged_files" not in st.session_state:
     st.session_state.logged_files = set()
 
 def login():
+    def mostra_file_su_drive():
+    st.markdown("### 📁 File su Google Drive:")
+    try:
+        service = get_drive_service()
+        result = service.files().list(q="trashed = false", fields="files(id, name)").execute()
+        files = result.get("files", [])
+        if not files:
+            st.warning("Nessun file trovato.")
+        else:
+            for f in files:
+                st.write(f"📄 {f['name']}")
+    except Exception as e:
+        st.error("Errore durante la lettura dei file Drive.")
+        st.exception(e)
+
+# Aggiungilo temporaneamente per il debug
+mostra_file_su_drive()
     st.markdown("## 🔐 Accesso alla Rassegna Stampa")
     username = st.text_input("👤 Nome utente", key="username_input", placeholder="Inserisci nome utente")
     password = st.text_input("🔑 Password", type="password", key="password_input", placeholder="Inserisci password")
