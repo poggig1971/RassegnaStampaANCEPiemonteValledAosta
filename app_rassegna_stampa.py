@@ -166,7 +166,7 @@ def mostra_statistiche():
         st.markdown("### 📁 File più visualizzati")
         st.bar_chart(top_file)
 
-        df['data'] = pd.to_datetime(df['data'])
+        df['data'] = pd.to_datetime(df['data'] + ' ' + df['ora'])
         ultimi_30 = df[df['data'] >= datetime.now() - pd.Timedelta(days=30)]
         if not ultimi_30.empty:
             st.markdown("### 📅 Accessi ultimi 30 giorni")
