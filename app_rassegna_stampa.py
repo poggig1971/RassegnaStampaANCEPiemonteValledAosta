@@ -96,7 +96,7 @@ def main():
                 st.session_state.clear()
                 st.rerun()
 
-        if user == "Admin":
+        if user == "Admin" and page != "Profilo":
             if not users:
                 st.info("📂 Nessun file utenti.csv trovato. Puoi crearne uno ora.")
                 if st.button("🆕 Crea file utenti.csv di default"):
