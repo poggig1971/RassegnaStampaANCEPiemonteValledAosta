@@ -248,7 +248,6 @@ def main():
             dashboard()
         elif page == "Statistiche":
             if user == "Admin":
-                mostra_statistiche()
                 try:
                     service = get_drive_service()
                     files = service.files().list(q="trashed = false", fields="files(id, name)").execute().get("files", [])
@@ -258,8 +257,11 @@ def main():
                         st.download_button("⬇️ Scarica log CSV", data=content, file_name="log_visualizzazioni.csv")
                 except Exception as e:
                     st.error(f"Errore nel download del CSV: {e}")
+
+                mostra_statistiche()
             else:
                 st.warning("⚠️ Accesso riservato. Le statistiche sono visibili solo all'amministratore.")
+                
                 
         elif page == "Profilo":
             with st.expander("🔑 Cambia password"):
