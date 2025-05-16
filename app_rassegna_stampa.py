@@ -92,26 +92,22 @@ def main():
             st.write("---")
             page = st.radio("📋 Seleziona una pagina", ["Archivio", "Statistiche", "Profilo"])
             st.write("---")
-            if st.button("🚪 Esci"):
-                st.session_state.clear()
-                st.rerun()
-
-        if user == "Admin" and page != "Profilo":
-            if not users:
-                st.info("📂 Nessun file utenti.csv trovato. Puoi crearne uno ora.")
-                if st.button("🆕 Crea file utenti.csv di default"):
-                    users = {
-                        "Admin": {
-                            "password": "CorsoDuca15",
-                            "password_cambiata": "no",
-                            "data_modifica": "2025-05-16"
+            if user == "Admin":
+                st.markdown("### ⚙️ Gestione utenti")
+                if not users:
+                    st.info("📂 Nessun file utenti.csv trovato. Puoi crearne uno ora.")
+                    if st.button("🆕 Crea file utenti.csv di default"):
+                        users = {
+                            "Admin": {
+                                "password": "CorsoDuca15",
+                                "password_cambiata": "no",
+                                "data_modifica": "2025-05-16"
+                            }
                         }
-                    }
-                    write_users_file(service, users)
-                    st.success("✅ File utenti.csv creato con successo.")
-                    st.rerun()
+                        write_users_file(service, users)
+                        st.success("✅ File utenti.csv creato con successo.")
+                        st.rerun()
 
-            with st.expander("👥 Gestione utenti"):
                 st.subheader("➕ Aggiungi o aggiorna utente")
                 nuovo_user = st.text_input("👤 Username")
                 nuova_pw = st.text_input("🔑 Password", type="password")
@@ -149,6 +145,33 @@ def main():
                     upload_pdf_to_drive(service, uploaded, "utenti.csv", is_memory_file=True, overwrite=True)
                     st.success("✅ utenti.csv aggiornato.")
                     st.rerun()
+
+            if st.button("🚪 Esci"):
+                st.session_state.clear()
+                st.rerun()
+
+        if page == "Archivio":
+            dashboard()
+        elif page == "Statistiche":
+            if user == "Admin":
+                mostra_statistiche()
+            else:
+                st.warning("⚠️ Accesso riservato. Le statistiche sono visibili solo all'amministratore.")
+        elif page == "Profilo":
+            with st.expander("🔑 Cambia password"):
+                old = st.text_input("Vecchia password", type="password", key="old")
+                new = st.text_input("Nuova password", type="password", key="new")
+                conf = st.text_input("Conferma nuova password", type="password", key="conf")
+                if st.button("Salva nuova password"):
+                    if old != users[user]["password"]:
+                        st.error("❌ Vecchia password errata.")
+                    elif new != conf:
+                        st.warning("⚠️ Le nuove password non coincidono.")
+                    else:
+                        update_user_password(service, users, user, new)
+                        st.success("✅ Password aggiornata.")
+                        st.rerun()
+
 
         if page == "Archivio":
             dashboard()
