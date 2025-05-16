@@ -42,6 +42,7 @@ if "user_data" not in st.session_state:
     st.session_state.user_data = {}
 
 def login():
+    st.image("logo.png", width=200)
     st.markdown("## 🔐 Accesso alla Rassegna Stampa")
     username = st.text_input("👤 Nome utente", key="username_input")
     password = st.text_input("🔑 Password", type="password", key="password_input")
