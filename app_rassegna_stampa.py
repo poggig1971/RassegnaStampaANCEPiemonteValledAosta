@@ -1,4 +1,3 @@
-
 import streamlit as st 
 import os
 from datetime import datetime, date
@@ -116,20 +115,32 @@ def main():
                     nuovo_user = st.text_input("👤 Username")
                     nuova_pw = st.text_input("🔑 Password", type="password")
                     if st.button("💾 Salva utente"):
-                        update_user_password(service, users, nuovo_user, nuova_pw)
-                        st.success(f"Utente '{nuovo_user}' aggiunto o aggiornato.")
-                        st.rerun()
+                        if not nuovo_user or not nuova_pw:
+                            st.warning("⚠️ Inserire sia username che password.")
+                        else:
+                            update_user_password(service, users, nuovo_user, nuova_pw)
+                            st.success(f"Utente '{nuovo_user}' aggiunto o aggiornato.")
+                            st.rerun()
 
                     st.subheader("🗑️ Elimina utente")
-                    user_to_delete = st.selectbox("Seleziona utente da rimuovere", [u for u in users if u != "Admin"])
-                    if st.button("❌ Elimina selezionato"):
-                        delete_user(service, users, user_to_delete)
-                        st.warning(f"Utente '{user_to_delete}' rimosso.")
-                        st.rerun()
+                    utenti_eliminabili = sorted([u for u in users if u != "Admin"])
+                    if utenti_eliminabili:
+                        user_to_delete = st.selectbox("Seleziona utente da rimuovere", utenti_eliminabili)
+                        if st.button("❌ Elimina selezionato"):
+                            delete_user(service, users, user_to_delete)
+                            st.warning(f"Utente '{user_to_delete}' rimosso.")
+                            st.rerun()
+                    else:
+                        st.info("ℹ️ Nessun altro utente da eliminare.")
 
                     st.subheader("📋 Elenco utenti attivi")
-                    for u, info in users.items():
-                        st.markdown(f"👤 **{u}** — 🔄 {info['data_modifica']}")
+                    if users:
+                        df_utenti = pd.DataFrame.from_dict(users, orient="index")
+                        df_utenti.index.name = "Username"
+                        df_utenti = df_utenti.reset_index()
+                        st.dataframe(df_utenti)
+                    else:
+                        st.info("🔍 Nessun utente registrato.")
 
             else:
                 with st.expander("🔑 Cambia password"):
@@ -155,3 +166,4 @@ def main():
                 st.warning("⚠️ Accesso riservato. Le statistiche sono visibili solo all'amministratore.")
 
 main()
+
