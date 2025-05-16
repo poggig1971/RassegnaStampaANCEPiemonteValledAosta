@@ -1,6 +1,8 @@
+
 import os
 import io
 import json
+import datetime
 import streamlit as st
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -52,7 +54,8 @@ def upload_pdf_to_drive(service, file_obj, drive_filename, is_memory_file=False,
                 file_obj = io.BytesIO(content.encode("utf-8"))
             else:
                 file_obj = io.BytesIO(content)
-        media = MediaIoBaseUpload(file_obj, mimetype='application/pdf' if drive_filename.endswith('.pdf') else 'text/csv')
+        mimetype = 'application/pdf' if drive_filename.endswith('.pdf') else 'text/csv'
+        media = MediaIoBaseUpload(file_obj, mimetype=mimetype)
     else:
         media = MediaFileUpload(file_obj, mimetype='application/pdf')
 
@@ -87,8 +90,6 @@ def download_pdf(service, file_id, local_path=None, return_bytes=False):
         return fh.read()
 
 def append_log_entry(service, user_email, file_uploaded):
-    import datetime
-
     log_filename = "log_accessi.txt"
     query = f"'{FOLDER_ID}' in parents and name='{log_filename}' and trashed=false"
     results = service.files().list(q=query, fields="files(id, name)").execute()
@@ -116,3 +117,39 @@ def append_log_entry(service, user_email, file_uploaded):
         media_body=media,
         fields='id'
     ).execute()
+
+# === Gestione utenti ===
+
+def read_users_file(service, filename="utenti.csv"):
+    query = f"'{FOLDER_ID}' in parents and name='{filename}' and trashed=false"
+    results = service.files().list(q=query, fields="files(id, name)").execute()
+    files = results.get('files', [])
+    if not files:
+        return {}
+    file_id = files[0]['id']
+    content = download_pdf(service, file_id, return_bytes=True).decode("utf-8")
+    users = {}
+    for line in content.strip().splitlines()[1:]:
+        username, password, cambiata, data = line.strip().split(",")
+        users[username] = {"password": password, "password_cambiata": cambiata, "data_modifica": data}
+    return users
+
+def write_users_file(service, users_dict, filename="utenti.csv"):
+    lines = ["username,password,password_cambiata,data_modifica"]
+    for u, data in users_dict.items():
+        lines.append(f"{u},{data['password']},{data['password_cambiata']},{data['data_modifica']}")
+    updated_content = "\n".join(lines)
+    upload_pdf_to_drive(service, io.StringIO(updated_content), filename, is_memory_file=True, overwrite=True)
+
+def update_user_password(service, users_dict, username, new_password, filename="utenti.csv"):
+    users_dict[username] = {
+        "password": new_password,
+        "password_cambiata": "yes",
+        "data_modifica": datetime.date.today().isoformat()
+    }
+    write_users_file(service, users_dict, filename)
+
+def delete_user(service, users_dict, username, filename="utenti.csv"):
+    if username in users_dict:
+        del users_dict[username]
+        write_users_file(service, users_dict, filename)
