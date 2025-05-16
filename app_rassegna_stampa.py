@@ -165,8 +165,21 @@ def main():
                 st.warning("⚠️ Accesso riservato. Le statistiche sono visibili solo all'amministratore.")
 
 def dashboard():
-    st.markdown("### 📂 Area Archivio")
-    st.info("Questa sezione mostrerà l'elenco dei PDF caricati su Google Drive.")
+    st.markdown("## 📂 Archivio Rassegne")
+    try:
+        service = get_drive_service()
+        files = list_pdfs_in_folder(service)
+        if not files:
+            st.info("📭 Nessun PDF trovato nella cartella di Drive.")
+            return
+        file_names = [file["name"] for file in files]
+        selected_file = st.selectbox("🗂️ Seleziona un file da visualizzare", file_names)
+        file_id = next((file["id"] for file in files if file["name"] == selected_file), None)
+        if file_id:
+            content = download_pdf(service, file_id, return_bytes=True)
+            st.download_button("⬇️ Scarica il PDF", data=BytesIO(content), file_name=selected_file)
+    except Exception as e:
+        st.error(f"Errore durante il caricamento dei file: {e}")
 
 def mostra_statistiche():
     st.markdown("### 📊 Area Statistiche")
