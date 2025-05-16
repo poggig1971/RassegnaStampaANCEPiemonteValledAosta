@@ -119,17 +119,25 @@ def append_log_entry(service, user_email, file_uploaded):
     ).execute()
 
 def load_user_credentials_from_drive():
+    filename = "utenti.txt"
     service = get_drive_service()
-    query = f"'{FOLDER_ID}' in parents and name='utenti.csv' and trashed=false"
-    files = service.files().list(q=query, fields="files(id, name)").execute().get("files", [])
 
+    # Trova il file sul Drive
+    results = service.files().list(
+        q=f"'{FOLDER_ID}' in parents and name='{filename}' and trashed=false",
+        fields="files(id, name)"
+    ).execute()
+    files = results.get("files", [])
     if not files:
-        st.error("❌ File utenti.csv non trovato su Google Drive.")
+        st.error("❌ File utenti.txt non trovato su Google Drive.")
         return pd.DataFrame(columns=["username", "password", "prima_volta", "data_ultimo_cambio"])
 
     file_id = files[0]['id']
     content = download_pdf(service, file_id, return_bytes=True).decode("utf-8")
-    df = pd.read_csv(StringIO(content))
+
+    # Leggi come tabella con separatore "|"
+    df = pd.read_csv(StringIO(content), sep="|", names=["username", "password", "prima_volta", "data_ultimo_cambio"])
+    return df
 
     # RIMUOVI SPAZI INVISIBILI
     df["username"] = df["username"].astype(str).str.strip()
