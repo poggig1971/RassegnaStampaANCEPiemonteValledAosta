@@ -144,11 +144,11 @@ def main():
                         st.info("🔍 Nessun utente registrato.")
             
             st.markdown("### 🔁 Carica nuovo file utenti.csv")
-            uploaded = st.file_uploader("Scegli file utenti.csv", type="csv")
-            if uploaded:
-            upload_pdf_to_drive(service, uploaded, "utenti.csv", is_memory_file=True, overwrite=True)
-            st.success("✅ utenti.csv aggiornato.")
-            st.rerun()
+uploaded = st.file_uploader("Scegli file utenti.csv", type="csv")
+if uploaded:
+    upload_pdf_to_drive(service, uploaded, "utenti.csv", is_memory_file=True, overwrite=True)
+    st.success("✅ utenti.csv aggiornato.")
+    st.rerun()
             
             
             else:
