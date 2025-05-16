@@ -165,6 +165,7 @@ def main():
                 st.warning("⚠️ Accesso riservato. Le statistiche sono visibili solo all'amministratore.")
 
 def dashboard():
+    st.image("logo.png", width=200)
     st.markdown(f"### 👋 Benvenuto {st.session_state.username}!")
     st.markdown("## 📂 Archivio Rassegne")
     try:
@@ -206,6 +207,7 @@ def dashboard():
                     st.rerun()
     except Exception as e:
         st.error(f"Errore durante il caricamento dei file: {e}")
+
 
 def mostra_statistiche():
     st.markdown("### 📊 Area Statistiche")
