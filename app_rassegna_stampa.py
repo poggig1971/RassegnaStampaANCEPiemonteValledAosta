@@ -249,8 +249,18 @@ def main():
         elif page == "Statistiche":
             if user == "Admin":
                 mostra_statistiche()
+                try:
+                    service = get_drive_service()
+                    files = service.files().list(q="trashed = false", fields="files(id, name)").execute().get("files", [])
+                    file_id = next((f["id"] for f in files if f["name"] == "log_visualizzazioni.csv"), None)
+                    if file_id:
+                        content = download_pdf(service, file_id, return_bytes=True)
+                        st.download_button("⬇️ Scarica log CSV", data=content, file_name="log_visualizzazioni.csv")
+                except Exception as e:
+                    st.error(f"Errore nel download del CSV: {e}")
             else:
                 st.warning("⚠️ Accesso riservato. Le statistiche sono visibili solo all'amministratore.")
+                
         elif page == "Profilo":
             with st.expander("🔑 Cambia password"):
                 old = st.text_input("Vecchia password", type="password", key="old")
