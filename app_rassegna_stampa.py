@@ -172,8 +172,37 @@ def mostra_statistiche():
             st.markdown("### 📅 Accessi ultimi 30 giorni")
             st.line_chart(ultimi_30.groupby('data').size())
 
+        # HEATMAP accessi settimanali per fascia oraria
+        st.markdown("### 🕒 Heatmap accessi settimanali per fascia oraria")
+        df['giorno_settimana'] = df['data'].dt.day_name()
+        df['ora'] = df['data'].dt.hour
+
+        def fascia_oraria(ora):
+            if 6 <= ora < 12:
+                return 'Mattino'
+            elif 12 <= ora < 18:
+                return 'Pomeriggio'
+            elif 18 <= ora < 24:
+                return 'Sera'
+            else:
+                return 'Notte'
+
+        df['fascia'] = df['ora'].apply(fascia_oraria)
+        heatmap_data = df.groupby(['giorno_settimana', 'fascia']).size().unstack(fill_value=0)
+        giorni_ordine = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        heatmap_data = heatmap_data.reindex(giorni_ordine)
+
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+
+        fig, ax = plt.subplots(figsize=(8, 5))
+        sns.heatmap(heatmap_data, annot=True, fmt="d", cmap="YlOrRd", ax=ax)
+        ax.set_title("Accessi per giorno e fascia oraria")
+        st.pyplot(fig)
+
     except Exception as e:
         st.error(f"❌ Errore durante il caricamento delle statistiche: {e}")
+
 
 def main():
     if not st.session_state.logged_in:
