@@ -169,6 +169,10 @@ def dashboard():
     try:
         service = get_drive_service()
         files = list_pdfs_in_folder(service)
+        if not files:
+            st.info("📭 Nessun PDF trovato nella cartella di Drive.")
+            return
+
         file_names = sorted([file["name"] for file in files], reverse=True)
         oggi = datetime.now(pytz.timezone("Europe/Rome")).strftime("%Y.%m.%d.pdf")
         if oggi in file_names:
@@ -176,17 +180,6 @@ def dashboard():
         else:
             st.warning("📭 La rassegna di oggi non è ancora stata caricata.")
 
-        selected_file = st.selectbox("🗂️ Seleziona un file da visualizzare", file_names)
-        file_id = next((file["id"] for file in files if file["name"] == selected_file), None)
-        if file_id:
-            content = download_pdf(service, file_id, return_bytes=True)
-            st.download_button("⬇️ Scarica il PDF", data=BytesIO(content), file_name=selected_file)
-
-        if not files:
-            st.info("📭 Nessun PDF trovato nella cartella di Drive.")
-            return
-
-        file_names = [file["name"] for file in files]
         selected_file = st.selectbox("🗂️ Seleziona un file da visualizzare", file_names)
         file_id = next((file["id"] for file in files if file["name"] == selected_file), None)
         if file_id:
