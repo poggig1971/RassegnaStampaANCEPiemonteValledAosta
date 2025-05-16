@@ -1,4 +1,4 @@
-import streamlit as st 
+import streamlit as st
 import os
 from datetime import datetime, date
 import pytz
@@ -21,7 +21,6 @@ st.markdown("""
     </head>
 """, unsafe_allow_html=True)
 
-
 from drive_utils import (
     get_drive_service,
     upload_pdf_to_drive,
@@ -41,11 +40,37 @@ if "logged_in" not in st.session_state:
 if "logged_files" not in st.session_state:
     st.session_state.logged_files = set()
 
+if "username_input" not in st.session_state:
+    st.session_state.username_input = ""
+if "password_input" not in st.session_state:
+    st.session_state.password_input = ""
+
+def read_users_file(service):
+    try:
+        results = service.files().list(q="trashed = false", fields="files(id, name)").execute()
+        files = results.get("files", [])
+        file_id = next((f["id"] for f in files if f["name"].lower() == "utenti.txt"), None)
+
+        if not file_id:
+            return {}
+
+        content = download_pdf(service, file_id, return_bytes=True).decode("utf-8")
+        lines = content.strip().split("\n")
+        user_data = {}
+        for line in lines:
+            parts = line.strip().split("|")
+            if len(parts) >= 2:
+                user_data[parts[0]] = {"password": parts[1]}
+        return user_data
+    except Exception as e:
+        st.error(f"Errore durante la lettura di utenti.txt: {e}")
+        return {}
+
 def login():
     st.markdown("## 🔐 Accesso alla Rassegna Stampa")
-    username = st.text_input("👤 Nome utente", key="username_input")
-    password = st.text_input("🔑 Password", type="password", key="password_input")
-    if st.button("Accedi"):
+    username = st.text_input("👤 Nome utente", key="username_field")
+    password = st.text_input("🔑 Password", type="password", key="password_field")
+    if st.button("Accedi", key="login_button"):
         service = get_drive_service()
         try:
             user_data = read_users_file(service)
@@ -59,7 +84,7 @@ def login():
                 st.session_state.logged_in = True
                 st.session_state.username = username
                 st.session_state.user_data = {}
-                st.warning("⚠️ File utenti.csv assente o vuoto. Accesso amministratore d’emergenza.")
+                st.warning("⚠️ File utenti.txt assente o vuoto. Accesso amministratore d’emergenza.")
                 st.rerun()
             else:
                 st.error("❌ Credenziali non valide. Riprova.")
