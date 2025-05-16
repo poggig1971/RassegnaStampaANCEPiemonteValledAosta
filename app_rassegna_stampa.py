@@ -172,12 +172,31 @@ def dashboard():
         if not files:
             st.info("📭 Nessun PDF trovato nella cartella di Drive.")
             return
+
         file_names = [file["name"] for file in files]
         selected_file = st.selectbox("🗂️ Seleziona un file da visualizzare", file_names)
         file_id = next((file["id"] for file in files if file["name"] == selected_file), None)
         if file_id:
             content = download_pdf(service, file_id, return_bytes=True)
             st.download_button("⬇️ Scarica il PDF", data=BytesIO(content), file_name=selected_file)
+
+        if st.session_state.username == "Admin":
+            st.markdown("### 📤 Carica nuova rassegna")
+            uploaded_files = st.file_uploader("Seleziona uno o più PDF", type="pdf", accept_multiple_files=True)
+            if uploaded_files:
+                for uploaded_file in uploaded_files:
+                    upload_pdf_to_drive(service, uploaded_file, uploaded_file.name, is_memory_file=True)
+                    st.success(f"✅ Caricato: {uploaded_file.name}")
+                st.rerun()
+
+            st.markdown("### 🗑️ Elimina file")
+            file_to_delete = st.selectbox("Seleziona file da eliminare", file_names)
+            if st.button("Elimina selezionato"):
+                file_id = next((file["id"] for file in files if file["name"] == file_to_delete), None)
+                if file_id:
+                    service.files().delete(fileId=file_id).execute()
+                    st.success(f"✅ File '{file_to_delete}' eliminato.")
+                    st.rerun()
     except Exception as e:
         st.error(f"Errore durante il caricamento dei file: {e}")
 
