@@ -165,6 +165,7 @@ def main():
                 st.warning("⚠️ Accesso riservato. Le statistiche sono visibili solo all'amministratore.")
 
 def dashboard():
+    st.markdown(f"### 👋 Benvenuto {st.session_state.username}!")
     st.markdown("## 📂 Archivio Rassegne")
     try:
         service = get_drive_service()
