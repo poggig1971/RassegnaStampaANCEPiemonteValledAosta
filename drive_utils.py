@@ -122,12 +122,22 @@ def load_user_credentials_from_drive():
     service = get_drive_service()
     query = f"'{FOLDER_ID}' in parents and name='utenti.csv' and trashed=false"
     files = service.files().list(q=query, fields="files(id, name)").execute().get("files", [])
-    if files:
-        file_id = files[0]['id']
-        content = download_pdf(service, file_id, return_bytes=True).decode("utf-8")
-        df = pd.read_csv(StringIO(content))
-    else:
-        df = pd.DataFrame(columns=["username", "password", "prima_volta", "data_ultimo_cambio"])
+
+    if not files:
+        st.error("❌ File utenti.csv non trovato su Google Drive.")
+        return pd.DataFrame(columns=["username", "password", "prima_volta", "data_ultimo_cambio"])
+
+    file_id = files[0]['id']
+    content = download_pdf(service, file_id, return_bytes=True).decode("utf-8")
+    df = pd.read_csv(StringIO(content))
+
+    # RIMUOVI SPAZI INVISIBILI
+    df["username"] = df["username"].astype(str).str.strip()
+    df["password"] = df["password"].astype(str).str.strip()
+
+    st.write("📄 Contenuto utenti.csv:")
+    st.dataframe(df)
+
     return df
 
 def save_user_credentials_to_drive(df):
