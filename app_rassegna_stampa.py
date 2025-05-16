@@ -35,20 +35,6 @@ col1, col2 = st.columns([3, 5])
 with col1:
     st.image("logo.png", width=300)
 
-USER_CREDENTIALS = {
-    "Admin": "CorsoDuca15",
-    "Torino": "Torino",
-    "Alessandria": "Alessandria",
-    "Asti": "Asti",
-    "Biella": "Biella",
-    "Verbania": "Verbania",
-    "Novara": "Novara",
-    "Vercelli": "Vercelli",
-    "Aosta": "Aosta",
-    "Cuneo": "Cuneo",
-    "Presidente": "Presidente"
-}
-
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.username = ""
@@ -60,13 +46,32 @@ def login():
     username = st.text_input("👤 Nome utente", key="username_input")
     password = st.text_input("🔑 Password", type="password", key="password_input")
     if st.button("Accedi"):
-        if username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
-            st.session_state.logged_in = True
-            st.session_state.username = username
-            st.success("✅ Accesso effettuato")
-            st.rerun()
-        else:
-            st.error("❌ Credenziali non valide. Riprova.")
+        service = get_drive_service()
+        try:
+            user_data = read_users_file(service)
+            if username in user_data and user_data[username]["password"] == password:
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.session_state.user_data = user_data
+                st.success("✅ Accesso effettuato")
+                st.rerun()
+            elif not user_data and username == "Admin" and password == "CorsoDuca15":
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.session_state.user_data = {}
+                st.warning("⚠️ File utenti.csv assente o vuoto. Accesso amministratore d’emergenza.")
+                st.rerun()
+            else:
+                st.error("❌ Credenziali non valide. Riprova.")
+        except Exception:
+            if username == "Admin" and password == "CorsoDuca15":
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.session_state.user_data = {}
+                st.warning("⚠️ Errore nella lettura del file utenti. Accesso amministratore d’emergenza.")
+                st.rerun()
+            else:
+                st.error("❌ Errore durante il login.")
 
 def is_valid_date_filename(filename):
     try:
