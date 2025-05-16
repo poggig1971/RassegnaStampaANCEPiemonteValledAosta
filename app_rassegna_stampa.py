@@ -262,6 +262,60 @@ def main():
             if st.button("🚪 Esci"):
                 st.session_state.clear()
                 st.rerun()
+    try:
+            users = read_users_file(get_drive_service())
+        except:
+            users = {}
+
+        if st.session_state.username == "Admin":
+            if not users:
+                st.info("📂 Nessun file utenti.csv trovato. Puoi crearne uno ora.")
+                if st.button("🆕 Crea file utenti.csv di default"):
+                    users = {
+                        "Admin": {
+                            "password": "CorsoDuca15",
+                            "password_cambiata": "no",
+                            "data_modifica": date.today().isoformat()
+                        }
+                    }
+                    write_users_file(get_drive_service(), users)
+                    st.success("✅ File utenti.csv creato con successo.")
+                    st.rerun()
+
+            with st.expander("👥 Gestione utenti"):
+                st.subheader("➕ Aggiungi o aggiorna utente")
+                nuovo_user = st.text_input("👤 Username")
+                nuova_pw = st.text_input("🔑 Password", type="password")
+                if st.button("💾 Salva utente"):
+                    update_user_password(get_drive_service(), users, nuovo_user, nuova_pw)
+                    st.success(f"Utente '{nuovo_user}' aggiunto o aggiornato.")
+                    st.rerun()
+
+                st.subheader("🗑️ Elimina utente")
+                user_to_delete = st.selectbox("Seleziona utente da rimuovere", [u for u in users if u != "Admin"])
+                if st.button("❌ Elimina selezionato"):
+                    delete_user(get_drive_service(), users, user_to_delete)
+                    st.warning(f"Utente '{user_to_delete}' rimosso.")
+                    st.rerun()
+
+                st.subheader("📋 Elenco utenti attivi")
+                for u, info in users.items():
+                    st.markdown(f"👤 **{u}** — 🔄 {info['data_modifica']}")
+
+                else:
+                    with st.expander("🔑 Cambia password"):
+                        old = st.text_input("Vecchia password", type="password", key="old")
+                        new = st.text_input("Nuova password", type="password", key="new")
+                        conf = st.text_input("Conferma nuova password", type="password", key="conf")
+                        if st.button("Salva nuova password"):
+                            if old != users[st.session_state.username]["password"]:
+                                st.error("❌ Vecchia password errata.")
+                            elif new != conf:
+                                st.warning("⚠️ Le nuove password non coincidono.")
+                            else:
+                                update_user_password(get_drive_service(), users, st.session_state.username, new)
+                                st.success("✅ Password aggiornata.")
+                                st.rerun()
 
         if page == "Archivio":
             dashboard()
