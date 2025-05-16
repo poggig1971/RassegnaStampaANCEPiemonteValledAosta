@@ -77,6 +77,92 @@ def login():
             else:
                 st.error("❌ Errore durante il login.")
 
+def dashboard():
+    st.image("logo.png", width=200)
+    st.markdown(f"### 👋 Benvenuto {st.session_state.username}!")
+    st.markdown("## 📂 Archivio Rassegne")
+    try:
+        service = get_drive_service()
+        files = list_pdfs_in_folder(service)
+        if not files:
+            st.info("📍 Nessun PDF trovato nella cartella di Drive.")
+            return
+
+        file_names = sorted([file["name"] for file in files], reverse=True)
+        oggi = datetime.now(pytz.timezone("Europe/Rome")).strftime("%Y.%m.%d.pdf")
+        if oggi in file_names:
+            st.success("✅ La rassegna di oggi è stata caricata.")
+        else:
+            st.warning("📍 La rassegna di oggi non è ancora stata caricata.")
+
+        selected_file = st.selectbox(
+            "📂 Seleziona un file da visualizzare",
+            file_names,
+            key=f"selectbox_visualizza_{st.session_state.username}"
+        )
+        file_id = next((file["id"] for file in files if file["name"] == selected_file), None)
+        if file_id:
+            content = download_pdf(service, file_id, return_bytes=True)
+            st.download_button("📂 Scarica il PDF", data=BytesIO(content), file_name=selected_file)
+
+        if st.session_state.username == "Admin":
+            st.markdown("### 📄 Carica nuova rassegna")
+            uploaded_files = st.file_uploader("Seleziona uno o più PDF", type="pdf", accept_multiple_files=True)
+            if uploaded_files:
+                for uploaded_file in uploaded_files:
+                    upload_pdf_to_drive(service, uploaded_file, uploaded_file.name, is_memory_file=True)
+                    st.success(f"✅ Caricato: {uploaded_file.name}")
+                st.rerun()
+                st.stop()
+
+            st.markdown("### 🔎 Elimina file")
+            file_to_delete = st.selectbox(
+                "Seleziona file da eliminare",
+                file_names,
+                key=f"selectbox_elimina_{st.session_state.username}"
+            )
+            if st.button("Elimina selezionato"):
+                file_id = next((file["id"] for file in files if file["name"] == file_to_delete), None)
+                if file_id:
+                    service.files().delete(fileId=file_id).execute()
+                    st.success(f"✅ File '{file_to_delete}' eliminato.")
+                    st.rerun()
+                    st.stop()
+    except Exception as e:
+        st.error(f"Errore durante il caricamento dei file: {e}")
+
+def mostra_statistiche():
+    st.markdown("### 📊 Area Statistiche")
+    try:
+        service = get_drive_service()
+        files = service.files().list(q="trashed = false", fields="files(id, name)").execute().get("files", [])
+        file_id = next((f["id"] for f in files if f["name"] == "log_visualizzazioni.csv"), None)
+        if not file_id:
+            st.info("📍 Nessun log disponibile.")
+            return
+
+        content = download_pdf(service, file_id, return_bytes=True).decode("utf-8")
+        df = pd.read_csv(StringIO(content))
+
+        st.metric("Totale visualizzazioni", len(df))
+
+        top_utenti = df['utente'].value_counts().head(5)
+        st.markdown("### 👥 Utenti più attivi")
+        st.bar_chart(top_utenti)
+
+        top_file = df['file'].value_counts().head(5)
+        st.markdown("### 📁 File più visualizzati")
+        st.bar_chart(top_file)
+
+        df['data'] = pd.to_datetime(df['data'])
+        ultimi_30 = df[df['data'] >= datetime.now() - pd.Timedelta(days=30)]
+        if not ultimi_30.empty:
+            st.markdown("### 📅 Accessi ultimi 30 giorni")
+            st.line_chart(ultimi_30.groupby('data').size())
+
+    except Exception as e:
+        st.error(f"❌ Errore durante il caricamento delle statistiche: {e}")
+
 def main():
     if not st.session_state.logged_in:
         login()
