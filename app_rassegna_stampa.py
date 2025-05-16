@@ -170,7 +170,9 @@ def mostra_statistiche():
         ultimi_30 = df[df['data'] >= datetime.now() - pd.Timedelta(days=30)]
         if not ultimi_30.empty:
             st.markdown("### 📅 Accessi ultimi 30 giorni")
-            st.line_chart(ultimi_30.groupby('data').size())
+            ultimi_30['solo_data'] = ultimi_30['data'].dt.date
+            st.line_chart(ultimi_30.groupby('solo_data').size())
+
 
        # HEATMAP accessi settimanali per fascia oraria
         st.markdown("### 🕒 Heatmap accessi settimanali per fascia oraria")
