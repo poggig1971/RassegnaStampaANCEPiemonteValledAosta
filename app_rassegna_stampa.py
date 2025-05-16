@@ -21,7 +21,6 @@ st.markdown("""
     </head>
 """, unsafe_allow_html=True)
 
-
 from drive_utils import (
     get_drive_service,
     upload_pdf_to_drive,
@@ -48,8 +47,7 @@ if "logged_in" not in st.session_state:
 if "logged_files" not in st.session_state:
     st.session_state.logged_files = set()
 
-def login():
-    def mostra_file_su_drive():
+def mostra_file_su_drive():
     st.markdown("### 📁 File su Google Drive:")
     try:
         service = get_drive_service()
@@ -64,8 +62,8 @@ def login():
         st.error("Errore durante la lettura dei file Drive.")
         st.exception(e)
 
-# Aggiungilo temporaneamente per il debug
-mostra_file_su_drive()
+def login():
+    mostra_file_su_drive()  # debug temporaneo
     st.markdown("## 🔐 Accesso alla Rassegna Stampa")
     username = st.text_input("👤 Nome utente", key="username_input", placeholder="Inserisci nome utente")
     password = st.text_input("🔑 Password", type="password", key="password_input", placeholder="Inserisci password")
