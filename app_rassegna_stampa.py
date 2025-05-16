@@ -85,7 +85,7 @@ def main():
             users = {}
 
         with st.sidebar:
-            st.image("logo.png", width=120)
+            st.image("logo.png", width=180)
             st.write("----")
             st.success(f"👤 {user}")
             st.write("---")
