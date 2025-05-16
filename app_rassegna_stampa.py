@@ -21,14 +21,13 @@ st.markdown("""
     </head>
 """, unsafe_allow_html=True)
 
+
 from drive_utils import (
     get_drive_service,
     upload_pdf_to_drive,
     list_pdfs_in_folder,
     download_pdf,
-    append_log_entry,
-    load_user_credentials_from_drive,
-    save_user_credentials_to_drive
+    append_log_entry
 )
 
 # === CONFIGURAZIONE ===
@@ -36,10 +35,19 @@ col1, col2 = st.columns([3, 5])
 with col1:
     st.image("logo.png", width=300)
 
-# Caricamento credenziali da CSV su Google Drive
-USER_CREDENTIALS_DF = load_user_credentials_from_drive()
-USER_CREDENTIALS = dict(zip(USER_CREDENTIALS_DF.username, USER_CREDENTIALS_DF.password))
-st.write("🔍 Credenziali caricate:", USER_CREDENTIALS)
+USER_CREDENTIALS = {
+    "Admin": "CorsoDuca15",
+    "Torino": "Torino",
+    "Alessandria": "Alessandria",
+    "Asti": "Asti",
+    "Biella": "Biella",
+    "Verbania": "Verbania",
+    "Novara": "Novara",
+    "Vercelli": "Vercelli",
+    "Aosta": "Aosta",
+    "Cuneo": "Cuneo",
+    "Presidente": "Presidente"
+}
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -47,29 +55,11 @@ if "logged_in" not in st.session_state:
 if "logged_files" not in st.session_state:
     st.session_state.logged_files = set()
 
-def mostra_file_su_drive():
-    st.markdown("### 📁 File su Google Drive:")
-    try:
-        service = get_drive_service()
-        result = service.files().list(q="trashed = false", fields="files(id, name)").execute()
-        files = result.get("files", [])
-        if not files:
-            st.warning("Nessun file trovato.")
-        else:
-            for f in files:
-                st.write(f"📄 {f['name']}")
-    except Exception as e:
-        st.error("Errore durante la lettura dei file Drive.")
-        st.exception(e)
-
 def login():
-    mostra_file_su_drive()  # debug temporaneo
     st.markdown("## 🔐 Accesso alla Rassegna Stampa")
-    username = st.text_input("👤 Nome utente", key="username_input", placeholder="Inserisci nome utente")
-    password = st.text_input("🔑 Password", type="password", key="password_input", placeholder="Inserisci password")
+    username = st.text_input("👤 Nome utente", key="username_input")
+    password = st.text_input("🔑 Password", type="password", key="password_input")
     if st.button("Accedi"):
-        st.write("🧪 Username digitato:", username)
-        st.write("🧪 Password digitata:", password)
         if username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
             st.session_state.logged_in = True
             st.session_state.username = username
@@ -77,21 +67,6 @@ def login():
             st.rerun()
         else:
             st.error("❌ Credenziali non valide. Riprova.")
-
-def mostra_cambio_password():
-    st.markdown("### 🔐 Cambia la tua password")
-    new_password = st.text_input("Inserisci nuova password", type="password", key="new_pass")
-    confirm = st.text_input("Conferma nuova password", type="password", key="confirm_pass")
-    if st.button("Aggiorna password"):
-        if new_password and new_password == confirm:
-            USER_CREDENTIALS_DF.loc[USER_CREDENTIALS_DF.username == st.session_state.username, "password"] = new_password
-            USER_CREDENTIALS_DF.loc[USER_CREDENTIALS_DF.username == st.session_state.username, "prima_volta"] = False
-            USER_CREDENTIALS_DF.loc[USER_CREDENTIALS_DF.username == st.session_state.username, "data_ultimo_cambio"] = date.today().strftime("%Y-%m-%d")
-            save_user_credentials_to_drive(USER_CREDENTIALS_DF)
-            st.success("✅ Password aggiornata con successo.")
-            st.rerun()
-        else:
-            st.error("❌ Le password non corrispondono o sono vuote.")
 
 def is_valid_date_filename(filename):
     try:

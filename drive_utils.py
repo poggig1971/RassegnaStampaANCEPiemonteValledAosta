@@ -2,7 +2,6 @@ import os
 import io
 import json
 import streamlit as st
-import pandas as pd
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload, MediaIoBaseUpload
@@ -117,41 +116,3 @@ def append_log_entry(service, user_email, file_uploaded):
         media_body=media,
         fields='id'
     ).execute()
-
-def load_user_credentials_from_drive():
-    filename = "utenti.txt"
-    service = get_drive_service()
-
-    # Trova il file sul Drive
-    results = service.files().list(
-        q=f"'{FOLDER_ID}' in parents and name='{filename}' and trashed=false",
-        fields="files(id, name)"
-    ).execute()
-    files = results.get("files", [])
-    if not files:
-        st.error("❌ File utenti.txt non trovato su Google Drive.")
-        return pd.DataFrame(columns=["username", "password", "prima_volta", "data_ultimo_cambio"])
-
-    file_id = files[0]['id']
-    content = download_pdf(service, file_id, return_bytes=True).decode("utf-8")
-
-    # Leggi come tabella con separatore "|"
-    df = pd.read_csv(StringIO(content), sep="|", names=["username", "password", "prima_volta", "data_ultimo_cambio"])
-    return df
-
-    # RIMUOVI SPAZI INVISIBILI
-    df["username"] = df["username"].astype(str).str.strip()
-    df["password"] = df["password"].astype(str).str.strip()
-
-    st.write("📄 Contenuto utenti.csv:")
-    st.dataframe(df)
-
-    return df
-
-def save_user_credentials_to_drive(df):
-    csv_buffer = StringIO()
-    df.to_csv(csv_buffer, index=False)
-    csv_buffer.seek(0)
-    service = get_drive_service()
-    upload_pdf_to_drive(service, csv_buffer, "utenti.csv", is_memory_file=True, overwrite=True)
-
