@@ -171,16 +171,6 @@ def main():
                         update_user_password(service, users, user, new)
                         st.success("✅ Password aggiornata.")
                         st.rerun()
-
-
-        if page == "Archivio":
-            dashboard()
-        elif page == "Statistiche":
-            if user == "Admin":
-                mostra_statistiche()
-            else:
-                st.warning("⚠️ Accesso riservato. Le statistiche sono visibili solo all'amministratore.")
-    
 def dashboard():
     st.image("logo.png", width=200)
     st.markdown(f"### 👋 Benvenuto {st.session_state.username}!")
