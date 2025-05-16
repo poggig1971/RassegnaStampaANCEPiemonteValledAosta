@@ -251,8 +251,6 @@ def mostra_statistiche():
     except Exception as e:
         st.error(f"❌ Errore durante il caricamento delle statistiche: {e}")
 
-main()
-
 
 if __name__ == "__main__":
     main()
