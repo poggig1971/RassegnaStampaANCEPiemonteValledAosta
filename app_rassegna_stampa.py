@@ -40,6 +40,7 @@ with col1:
 # Caricamento credenziali da CSV su Google Drive
 USER_CREDENTIALS_DF = load_user_credentials_from_drive()
 USER_CREDENTIALS = dict(zip(USER_CREDENTIALS_DF.username, USER_CREDENTIALS_DF.password))
+st.write("🔍 Credenziali caricate:", USER_CREDENTIALS)
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -52,6 +53,8 @@ def login():
     username = st.text_input("👤 Nome utente", key="username_input", placeholder="Inserisci nome utente")
     password = st.text_input("🔑 Password", type="password", key="password_input", placeholder="Inserisci password")
     if st.button("Accedi"):
+        st.write("🧪 Username digitato:", username)
+        st.write("🧪 Password digitata:", password)
         if username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
             st.session_state.logged_in = True
             st.session_state.username = username
