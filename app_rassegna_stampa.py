@@ -1,93 +1,186 @@
-# Tutto il codice aggiornato incluso dashboard corretto
-# Inserisci qui tutto il contenuto integrato
+# Questo è il file completo `app_rassegna_stampa.py` da usare con Streamlit
+# Comprende: login, gestione utenti, creazione utenti.csv, dashboard PDF, log, statistiche
 
-def dashboard():
-    st.markdown("## 📚 Archivio Rassegne")
-    nome_utente = st.session_state.username
-    if nome_utente == "Presidente":
-        st.markdown("👑 **Benvenuto Presidente**")
-        st.caption("Grazie.")
-    else:
-        st.markdown(f"👋 **Benvenuto da ANCE {nome_utente}!**")
-        st.caption("Accedi alle rassegne stampa aggiornate giorno per giorno.")
+import streamlit as st
+import os
+from datetime import datetime, date
+import pytz
+import pandas as pd
+from io import StringIO, BytesIO
+from PIL import Image
 
+# === CONFIGURAZIONE INIZIALE ===
+favicon = Image.open("favicon_ance.png")
+st.set_page_config(
+    page_title="Rassegna ANCE Piemonte",
+    page_icon=favicon,
+    layout="centered"
+)
+
+st.markdown("""
+    <head>
+        <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/poggig1971/RassegnaStampaANCEPiemonteValledAosta/main/public/app-icon.png">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+    </head>
+""", unsafe_allow_html=True)
+
+from drive_utils import (
+    get_drive_service,
+    upload_pdf_to_drive,
+    list_pdfs_in_folder,
+    download_pdf,
+    append_log_entry,
+    read_users_file,
+    update_user_password,
+    delete_user,
+    write_users_file
+)
+
+# === VARIABILI DI SESSIONE ===
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+    st.session_state.username = ""
+if "logged_files" not in st.session_state:
+    st.session_state.logged_files = set()
+if "user_data" not in st.session_state:
+    st.session_state.user_data = {}
+
+# === FUNZIONE LOGIN ===
+def login():
+    st.markdown("## 🔐 Accesso alla Rassegna Stampa")
+    username = st.text_input("🕤 Nome utente", key="username_input")
+    password = st.text_input("🔑 Password", type="password", key="password_input")
+    if st.button("Accedi"):
+        service = get_drive_service()
+        try:
+            user_data = read_users_file(service)
+            if username in user_data and user_data[username]["password"] == password:
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.session_state.user_data = user_data
+                st.success("✅ Accesso effettuato")
+                st.rerun()
+            elif not user_data and username == "Admin" and password == "CorsoDuca15":
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.session_state.user_data = {}
+                st.warning("⚠️ File utenti.csv assente o vuoto. Accesso amministratore d’emergenza.")
+                st.rerun()
+            else:
+                st.error("❌ Credenziali non valide. Riprova.")
+        except Exception:
+            if username == "Admin" and password == "CorsoDuca15":
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.session_state.user_data = {}
+                st.warning("⚠️ Errore nella lettura del file utenti. Accesso amministratore d’emergenza.")
+                st.rerun()
+            else:
+                st.error("❌ Errore durante il login.")
+
+# === FUNZIONI DI UTILITÀ ===
+def is_valid_date_filename(filename):
+    try:
+        datetime.strptime(filename.replace(".pdf", ""), "%Y.%m.%d")
+        return True
+    except ValueError:
+        return False
+
+def log_visualizzazione(username, filename):
+    tz = pytz.timezone("Europe/Rome")
+    now = datetime.now(tz)
+    data = now.strftime("%Y-%m-%d")
+    ora = now.strftime("%H:%M:%S")
     try:
         service = get_drive_service()
         results = service.files().list(q="trashed = false", fields="files(id, name)").execute()
         files = results.get("files", [])
+        file_id = next((f["id"] for f in files if f["name"] == "log_visualizzazioni.csv"), None)
+        if file_id:
+            content = download_pdf(service, file_id, return_bytes=True).decode("utf-8")
+            df = pd.read_csv(StringIO(content))
+        else:
+            df = pd.DataFrame(columns=["data", "ora", "utente", "file"])
+        df = pd.concat([df, pd.DataFrame([{"data": data, "ora": ora, "utente": username, "file": filename}])])
+        csv_buffer = StringIO()
+        df.to_csv(csv_buffer, index=False)
+        csv_buffer.seek(0)
+        if file_id:
+            service.files().delete(fileId=file_id).execute()
+        upload_pdf_to_drive(service, csv_buffer, "log_visualizzazioni.csv", is_memory_file=True)
     except Exception as e:
-        st.error("⚠️ Errore nella connessione a Google Drive.")
+        st.warning(f"⚠️ Errore nel salvataggio log: {e}")
+
+# === FUNZIONE PRINCIPALE ===
+def main():
+    if not st.session_state.logged_in:
+        login()
         return
 
-    oggi = datetime.now(pytz.timezone("Europe/Rome")).strftime("%Y.%m.%d")
-    if any(f["name"] == f"{oggi}.pdf" for f in files):
-        st.success("✅ La rassegna di oggi è disponibile.")
-    else:
-        st.warning("📭 La rassegna di oggi non è ancora caricata.")
+    user = st.session_state.username
+    service = get_drive_service()
+    try:
+        users = read_users_file(service)
+    except:
+        users = {}
 
-    if files:
-        date_strings = [
-            f["name"].replace(".pdf", "")
-            for f in files
-            if f["name"].lower().endswith(".pdf") and is_valid_date_filename(f["name"])
-        ]
-        most_recent = max(date_strings)
-        st.caption(f"🕒 Ultimo file disponibile: {most_recent}")
-    else:
-        st.caption("🕒 Nessun file PDF trovato su Google Drive.")
-
-    if st.button("🔄 Aggiorna elenco PDF"):
-        st.rerun()
-
-    if st.session_state.username == "Admin":
-        st.markdown("### 📄 Carica nuova rassegna stampa")
-        uploaded_files = st.file_uploader("Seleziona uno o più file PDF", type="pdf", accept_multiple_files=True)
-        if uploaded_files:
-            existing_filenames = [f["name"] for f in files]
-            for uploaded_file in uploaded_files:
-                filename = uploaded_file.name
-                if not is_valid_date_filename(filename):
-                    st.warning(f"⚠️ Il nome del file '{filename}' non rispetta il formato 'YYYY.MM.DD.pdf'.")
-                    continue
-                if filename in existing_filenames:
-                    st.warning(f"❗ Il file '{filename}' è già presente su Drive.")
-                    continue
-                file_bytes = BytesIO(uploaded_file.getbuffer())
-                upload_pdf_to_drive(service, file_bytes, filename, is_memory_file=True)
-                append_log_entry(service, st.session_state.username, filename)
-                st.success(f"✅ Caricato: {filename}")
+    with st.sidebar:
+        st.image("logo.png", width=120)
+        st.success(f"🕤 {user}")
+        page = st.radio("📋 Seleziona una pagina", ["Archivio", "Statistiche"])
+        if st.button("🚪 Esci"):
+            st.session_state.clear()
             st.rerun()
 
-        st.markdown("### 🗑️ Elimina file da Drive")
-        deletable_files = [f for f in files if f["name"].lower().endswith(".pdf")]
-        file_to_delete = st.selectbox("Seleziona un file da eliminare", [f["name"] for f in deletable_files])
-        if st.button("Elimina file selezionato"):
-            file_id = next((f["id"] for f in deletable_files if f["name"] == file_to_delete), None)
-            if file_id:
-                service.files().delete(fileId=file_id).execute()
-                st.success(f"✅ File '{file_to_delete}' eliminato da Google Drive.")
-                st.rerun()
+        if user == "Admin":
+            if not users:
+                st.info("📂 File utenti.csv mancante. Crealo ora.")
+                if st.button("Crea file utenti.csv di default"):
+                    users = {
+                        "Admin": {
+                            "password": "CorsoDuca15",
+                            "password_cambiata": "no",
+                            "data_modifica": date.today().isoformat()
+                        }
+                    }
+                    write_users_file(service, users)
+                    st.success("File creato con successo.")
+                    st.rerun()
+            with st.expander("👥 Gestione utenti"):
+                nuovo_user = st.text_input("Nuovo utente")
+                nuova_pw = st.text_input("Password", type="password")
+                if st.button("Salva utente"):
+                    update_user_password(service, users, nuovo_user, nuova_pw)
+                    st.success("Utente aggiornato.")
+                    st.rerun()
+                user_to_delete = st.selectbox("Elimina utente", [u for u in users if u != "Admin"])
+                if st.button("Elimina"):
+                    delete_user(service, users, user_to_delete)
+                    st.warning(f"Utente '{user_to_delete}' rimosso.")
+                    st.rerun()
+        else:
+            with st.expander("🔑 Cambia password"):
+                old = st.text_input("Vecchia password", type="password", key="old")
+                new = st.text_input("Nuova password", type="password", key="new")
+                conf = st.text_input("Conferma nuova password", type="password", key="conf")
+                if st.button("Aggiorna password"):
+                    if old != users[user]["password"]:
+                        st.error("Vecchia password errata.")
+                    elif new != conf:
+                        st.warning("Le nuove password non coincidono.")
+                    else:
+                        update_user_password(service, users, user, new)
+                        st.success("Password aggiornata.")
+                        st.rerun()
 
-    seen = set()
-    date_options = []
-    for f in files:
-        name = f["name"]
-        if name.lower().endswith(".pdf") and is_valid_date_filename(name):
-            date_str = name.replace(".pdf", "")
-            if date_str not in seen:
-                seen.add(date_str)
-                date_options.append(date_str)
-    date_options = sorted(date_options, reverse=True)
+    if page == "Archivio":
+        from dashboard import dashboard
+        dashboard()
+    elif page == "Statistiche":
+        from statistiche import mostra_statistiche
+        if user == "Admin":
+            mostra_statistiche()
+        else:
+            st.warning("Accesso riservato all'amministratore.")
 
-    if date_options:
-        selected_date = st.selectbox("🗓️ Seleziona una data", date_options)
-        selected_file = f"{selected_date}.pdf"
-        file_id = next((f["id"] for f in files if f["name"] == selected_file), None)
-        if file_id:
-            content = download_pdf(service, file_id, return_bytes=True)
-            st.download_button(f"⬇️ Scarica rassegna {selected_date}", data=BytesIO(content), file_name=selected_file)
-            if selected_file not in st.session_state.logged_files:
-                log_visualizzazione(st.session_state.username, selected_file)
-                st.session_state.logged_files.add(selected_file)
-    else:
-        st.info("📬 Nessun file PDF trovato su Google Drive.")
+main()
