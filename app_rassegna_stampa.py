@@ -44,8 +44,14 @@ if "user_data" not in st.session_state:
 def login():
     st.image("logo.png", width=200)
     st.markdown("## 🔐 Accesso alla Rassegna Stampa")
-    username = st.text_input("👤 Nome utente", key="username_input")
+
+    # Recupera lo username ricordato (se esiste)
+    default_username = st.session_state.get("remembered_user", "")
+    username = st.text_input("👤 Nome utente", value=default_username, key="username_input")
     password = st.text_input("🔑 Password", type="password", key="password_input")
+
+    remember = st.checkbox("🔁 Ricorda nome utente per questa sessione")
+
     if st.button("Accedi"):
         service = get_drive_service()
         try:
@@ -54,6 +60,8 @@ def login():
                 st.session_state.logged_in = True
                 st.session_state.username = username
                 st.session_state.user_data = user_data
+                if remember:
+                    st.session_state["remembered_user"] = username
                 st.success("✅ Accesso effettuato")
                 st.rerun()
                 st.stop()
@@ -61,6 +69,8 @@ def login():
                 st.session_state.logged_in = True
                 st.session_state.username = username
                 st.session_state.user_data = {}
+                if remember:
+                    st.session_state["remembered_user"] = username
                 st.warning("⚠️ File utenti.csv assente o vuoto. Accesso amministratore d’emergenza.")
                 st.rerun()
                 st.stop()
@@ -71,6 +81,8 @@ def login():
                 st.session_state.logged_in = True
                 st.session_state.username = username
                 st.session_state.user_data = {}
+                if remember:
+                    st.session_state["remembered_user"] = username
                 st.warning("⚠️ Errore nella lettura del file utenti. Accesso amministratore d’emergenza.")
                 st.rerun()
                 st.stop()
