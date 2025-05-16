@@ -2,6 +2,7 @@ import os
 import io
 import json
 import streamlit as st
+import pandas as pd
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload, MediaIoBaseUpload
@@ -116,3 +117,23 @@ def append_log_entry(service, user_email, file_uploaded):
         media_body=media,
         fields='id'
     ).execute()
+
+def load_user_credentials_from_drive():
+    service = get_drive_service()
+    query = f"'{FOLDER_ID}' in parents and name='utenti.csv' and trashed=false"
+    files = service.files().list(q=query, fields="files(id, name)").execute().get("files", [])
+    if files:
+        file_id = files[0]['id']
+        content = download_pdf(service, file_id, return_bytes=True).decode("utf-8")
+        df = pd.read_csv(StringIO(content))
+    else:
+        df = pd.DataFrame(columns=["username", "password", "prima_volta", "data_ultimo_cambio"])
+    return df
+
+def save_user_credentials_to_drive(df):
+    csv_buffer = StringIO()
+    df.to_csv(csv_buffer, index=False)
+    csv_buffer.seek(0)
+    service = get_drive_service()
+    upload_pdf_to_drive(service, csv_buffer, "utenti.csv", is_memory_file=True, overwrite=True)
+
