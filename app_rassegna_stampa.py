@@ -172,6 +172,76 @@ def mostra_statistiche():
             ultimi_30['solo_data'] = ultimi_30['data'].dt.date
             st.line_chart(ultimi_30.groupby('solo_data').size())
 
+def mostra_statistiche_user():
+    st.markdown("### 📊 Statistiche di utilizzo della Rassegna")
+    try:
+        service = get_drive_service()
+        files = service.files().list(q="trashed = false", fields="files(id, name)").execute().get("files", [])
+        file_id = next((f["id"] for f in files if f["name"] == "log_visualizzazioni.csv"), None)
+        if not file_id:
+            st.info("📍 Nessun log disponibile.")
+            return
+
+        content = download_pdf(service, file_id, return_bytes=True).decode("utf-8")
+        df = pd.read_csv(StringIO(content))
+        df['data'] = pd.to_datetime(df['data'] + ' ' + df['ora'])
+
+        st.metric("📥 Totale visualizzazioni", len(df))
+
+        ultimi_30 = df[df['data'] >= datetime.now() - pd.Timedelta(days=30)]
+        if not ultimi_30.empty:
+            ultimi_30['solo_data'] = ultimi_30['data'].dt.date
+            st.markdown("### 📅 Accessi giornalieri (ultimi 30 giorni)")
+            st.line_chart(ultimi_30.groupby('solo_data').size())
+
+        st.markdown("### 📁 File più letti")
+        top_file = df['file'].value_counts().head(5)
+        st.bar_chart(top_file)
+
+        st.markdown("### 🕒 Quando viene consultata la rassegna")
+        df['giorno_settimana'] = df['data'].dt.day_name()
+        df['ora'] = df['data'].dt.hour
+
+        def fascia_oraria(ora):
+            if 6 <= ora < 12:
+                return 'Mattino'
+            elif 12 <= ora < 18:
+                return 'Pomeriggio'
+            elif 18 <= ora < 24:
+                return 'Sera'
+            else:
+                return 'Notte'
+
+        df['fascia'] = df['ora'].apply(fascia_oraria)
+        heatmap_data = df.groupby(['giorno_settimana', 'fascia']).size().unstack(fill_value=0)
+        giorni_ordine = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        fasce_ordine = ['Notte', 'Mattino', 'Pomeriggio', 'Sera']
+        heatmap_data = heatmap_data.reindex(giorni_ordine).reindex(columns=fasce_ordine)
+
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        fig, ax = plt.subplots(figsize=(8, 5))
+        im = ax.imshow(heatmap_data.values, cmap="YlGnBu")
+
+        ax.set_xticks(np.arange(len(heatmap_data.columns)))
+        ax.set_yticks(np.arange(len(heatmap_data.index)))
+        ax.set_xticklabels(heatmap_data.columns, fontsize=8)
+        ax.set_yticklabels(heatmap_data.index, fontsize=8)
+
+        for i in range(len(heatmap_data.index)):
+            for j in range(len(heatmap_data.columns)):
+                valore = heatmap_data.values[i, j]
+                testo = int(valore) if not pd.isna(valore) else "-"
+                ax.text(j, i, testo, ha="center", va="center", color="black")
+
+        ax.set_title("Accessi per giorno e fascia oraria", fontsize=10)
+        fig.tight_layout()
+        st.pyplot(fig)
+
+    except Exception as e:
+        st.error(f"❌ Errore durante il caricamento delle statistiche: {e}")
+
 
        # HEATMAP accessi settimanali per fascia oraria
         st.markdown("### 🕒 Heatmap accessi settimanali per fascia oraria")
@@ -325,11 +395,11 @@ def main():
                         st.download_button("⬇️ Scarica log CSV", data=content, file_name="log_visualizzazioni.csv")
                 except Exception as e:
                     st.error(f"Errore nel download del CSV: {e}")
-
-                mostra_statistiche()
+        
+                mostra_statistiche()  # Versione completa
             else:
-                st.warning("⚠️ Accesso riservato. Le statistiche sono visibili solo all'amministratore.")
-                
+                mostra_statistiche_user()  # Versione semplificata per utenti normali
+
                 
         elif page == "Profilo":
             with st.expander("🔑 Cambia password"):
