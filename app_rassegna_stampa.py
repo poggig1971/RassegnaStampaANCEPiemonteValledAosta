@@ -50,7 +50,6 @@ def login():
     username = st.text_input("👤 Nome utente", value=default_username, key="username_input")
     password = st.text_input("🔑 Password", type="password", key="password_input")
 
-    remember = st.checkbox("🔁 Ricorda nome utente per questa sessione")
 
     if st.button("Accedi"):
         service = get_drive_service()
