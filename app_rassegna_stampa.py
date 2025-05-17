@@ -49,7 +49,7 @@ def login():
     default_username = st.session_state.get("remembered_user", "")
     username = st.text_input("👤 Nome utente", value=default_username, key="username_input")
     password = st.text_input("🔑 Password", type="password", key="password_input")
-
+    remember = st.checkbox("🔒 Ricordami su questo dispositivo")
 
     if st.button("Accedi"):
         service = get_drive_service()
