@@ -207,7 +207,8 @@ def mostra_statistiche():
 
         for i in range(len(heatmap_data.index)):
             for j in range(len(heatmap_data.columns)):
-                text = ax.text(j, i, heatmap_data.values[i, j], ha="center", va="center", color="black")
+                valore = int(heatmap_data.values[i, j])  # Rimuove i decimali forzando a intero
+                ax.text(j, i, valore, ha="center", va="center", color="black")
 
         ax.set_title("Accessi per giorno e fascia oraria", fontsize=10)
         fig.tight_layout()
