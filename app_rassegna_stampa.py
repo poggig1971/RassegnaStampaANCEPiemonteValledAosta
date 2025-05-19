@@ -289,6 +289,29 @@ def mostra_statistiche():
         st.error(f"❌ Errore durante il caricamento delle statistiche: {e}")
 
 
+ # 📈 Grafico globale: cosa hanno letto e quando
+        st.markdown("### 🌐 Attività di tutti gli utenti: file letti nel tempo")
+
+        import plotly.express as px
+        df_global = df.copy()
+        df_global['data_ora'] = pd.to_datetime(df_global['data'] + ' ' + df_global['ora'])
+
+        fig_global = px.scatter(
+            df_global,
+            x="data_ora",
+            y="utente",
+            color="file",
+            hover_data=["file"],
+            title="Attività utenti: letture dei file nel tempo",
+            labels={"data_ora": "Data/Ora", "utente": "Utente", "file": "File"}
+        )
+        fig_global.update_traces(marker=dict(size=7), selector=dict(mode='markers'))
+        fig_global.update_layout(height=500)
+
+        st.plotly_chart(fig_global, use_container_width=True)
+
+
+
 def main():
     if not st.session_state.logged_in:
         login()
