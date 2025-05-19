@@ -452,6 +452,9 @@ def main():
                         new_pw = nuova_pw if nuova_pw else None
                         new_email = nuova_email if nuova_email != email_corrente else None
                         update_user_info(service, users, user, new_password=new_pw, new_email=new_email)
+                        # ricarica i dati aggiornati
+                        users = read_users_file(service)
+                        st.session_state.user_data = users
                         st.success("✅ Modifiche salvate con successo.")
                         st.rerun()
                         st.stop()
