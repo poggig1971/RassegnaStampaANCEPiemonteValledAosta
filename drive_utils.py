@@ -154,14 +154,8 @@ def write_users_file(service, users_dict, filename="utenti.csv"):
     upload_pdf_to_drive(service, io.StringIO(updated_content), filename, is_memory_file=True, overwrite=True)
 
 def update_user_password(service, users_dict, username, new_password, filename="utenti.csv"):
-    old_data = users_dict.get(username, {})
-    users_dict[username] = {
-        "password": new_password,
-        "password_cambiata": "yes",
-        "data_modifica": datetime.date.today().isoformat(),
-        "email": old_data.get("email", "")
-    }
-    write_users_file(service, users_dict, filename)
+    update_user_info(service, users_dict, username, new_password=new_password, filename=filename)
+
 
 def delete_user(service, users_dict, username, filename="utenti.csv"):
     if username in users_dict:
