@@ -29,6 +29,7 @@ from drive_utils import (
     append_log_entry,
     read_users_file,
     update_user_password,
+    update_user_info,  
     delete_user,
     write_users_file
 )
