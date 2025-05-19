@@ -424,7 +424,7 @@ def main():
                 mostra_statistiche_user()  # Versione semplificata per utenti normali
 
                 
-       elif page == "Profilo":
+        elif page == "Profilo":
             st.markdown("## 👤 Profilo utente")
             st.markdown(f"**Username:** `{user}`")
         
