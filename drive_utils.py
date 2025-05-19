@@ -168,3 +168,21 @@ def delete_user(service, users_dict, username, filename="utenti.csv"):
         del users_dict[username]
         write_users_file(service, users_dict, filename)
 
+def update_user_info(service, users_dict, username, new_password=None, new_email=None, filename="utenti.csv"):
+    if username not in users_dict:
+        return
+
+    user_data = users_dict[username]
+
+    if new_password:
+        user_data["password"] = new_password
+        user_data["password_cambiata"] = "yes"
+
+    if new_email:
+        user_data["email"] = new_email
+
+    user_data["data_modifica"] = datetime.date.today().isoformat()
+
+    users_dict[username] = user_data
+    write_users_file(service, users_dict, filename)
+
