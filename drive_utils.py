@@ -163,7 +163,8 @@ def delete_user(service, users_dict, username, filename="utenti.csv"):
         write_users_file(service, users_dict, filename)
 
 def update_user_info(service, users_dict, username, new_password=None, new_email=None, filename="utenti.csv"):
-    if username not in users_dict:
+    if not users_dict or username not in users_dict:
+        st.error("❌ Errore: l'utente non è presente nel dizionario.")
         return
 
     user_data = users_dict[username]
@@ -176,7 +177,13 @@ def update_user_info(service, users_dict, username, new_password=None, new_email
         user_data["email"] = new_email
 
     user_data["data_modifica"] = datetime.date.today().isoformat()
-
     users_dict[username] = user_data
+
+    # Protezione: non scrivere se il dizionario è vuoto
+    if not users_dict:
+        st.error("❌ Errore: il file utenti risulterebbe vuoto. Operazione annullata.")
+        return
+
     write_users_file(service, users_dict, filename)
+
 
