@@ -425,20 +425,31 @@ def main():
 
                 
         elif page == "Profilo":
-            with st.expander("🔑 Cambia password"):
-                old = st.text_input("Vecchia password", type="password", key="old")
-                new = st.text_input("Nuova password", type="password", key="new")
-                conf = st.text_input("Conferma nuova password", type="password", key="conf")
-                if st.button("Salva nuova password"):
-                    if old != users[user]["password"]:
-                        st.error("❌ Vecchia password errata.")
-                    elif new != conf:
-                        st.warning("⚠️ Le nuove password non coincidono.")
-                    else:
-                        update_user_password(service, users, user, new)
-                        st.success("✅ Password aggiornata.")
-                        st.rerun()
-                        st.stop()
+            st.markdown("## 👤 Profilo utente")
+            st.markdown(f"**Username:** `{user}`")
+        
+            email_corrente = users[user].get("email", "")
+            nuova_email = st.text_input("📧 Email", value=email_corrente)
+        
+            vecchia_pw = st.text_input("🔐 Vecchia password", type="password")
+            nuova_pw = st.text_input("🔑 Nuova password", type="password")
+            conferma_pw = st.text_input("🔁 Conferma nuova password", type="password")
+
+        if st.button("💾 Salva modifiche"):
+            if vecchia_pw and vecchia_pw != users[user]["password"]:
+                st.error("❌ Vecchia password errata.")
+            elif nuova_pw and nuova_pw != conferma_pw:
+                st.warning("⚠️ Le nuove password non coincidono.")
+            elif not nuova_pw and nuova_email == email_corrente:
+                st.info("ℹ️ Nessuna modifica rilevata.")
+            else:
+                new_pw = nuova_pw if nuova_pw else None
+                new_email = nuova_email if nuova_email != email_corrente else None
+                update_user_info(service, users, user, new_password=new_pw, new_email=new_email)
+                st.success("✅ Modifiche salvate con successo.")
+                st.rerun()
+                st.stop()
+
 
 if __name__ == "__main__":
     main()
