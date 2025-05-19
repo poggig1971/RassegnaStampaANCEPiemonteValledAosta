@@ -130,22 +130,36 @@ def read_users_file(service, filename="utenti.csv"):
     content = download_pdf(service, file_id, return_bytes=True).decode("utf-8")
     users = {}
     for line in content.strip().splitlines()[1:]:
-        username, password, cambiata, data = line.strip().split(",")
-        users[username] = {"password": password, "password_cambiata": cambiata, "data_modifica": data}
+        parts = line.strip().split(",")
+        if len(parts) == 5:
+            username, password, cambiata, data, email = parts
+        else:
+            # per retrocompatibilità se manca l'email
+            username, password, cambiata, data = parts
+            email = ""
+        users[username] = {
+            "password": password,
+            "password_cambiata": cambiata,
+            "data_modifica": data,
+            "email": email
+        }
     return users
 
 def write_users_file(service, users_dict, filename="utenti.csv"):
-    lines = ["username,password,password_cambiata,data_modifica"]
+    lines = ["username,password,password_cambiata,data_modifica,email"]
     for u, data in users_dict.items():
-        lines.append(f"{u},{data['password']},{data['password_cambiata']},{data['data_modifica']}")
+        email = data.get("email", "")
+        lines.append(f"{u},{data['password']},{data['password_cambiata']},{data['data_modifica']},{email}")
     updated_content = "\n".join(lines)
     upload_pdf_to_drive(service, io.StringIO(updated_content), filename, is_memory_file=True, overwrite=True)
 
 def update_user_password(service, users_dict, username, new_password, filename="utenti.csv"):
+    old_data = users_dict.get(username, {})
     users_dict[username] = {
         "password": new_password,
         "password_cambiata": "yes",
-        "data_modifica": datetime.date.today().isoformat()
+        "data_modifica": datetime.date.today().isoformat(),
+        "email": old_data.get("email", "")
     }
     write_users_file(service, users_dict, filename)
 
@@ -153,3 +167,4 @@ def delete_user(service, users_dict, username, filename="utenti.csv"):
     if username in users_dict:
         del users_dict[username]
         write_users_file(service, users_dict, filename)
+
