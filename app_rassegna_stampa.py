@@ -429,6 +429,7 @@ def main():
             st.markdown(f"**Username:** `{user}`")
         
             email_corrente = users[user].get("email", "")
+            st.markdown("_Email attualmente registrata. Se desideri modificarla, riscrivila nel campo qui sotto e premi 'Salva modifiche.'_")
             nuova_email = st.text_input("📧 Email", value=email_corrente)
         
             vecchia_pw = st.text_input("🔐 Vecchia password", type="password")
