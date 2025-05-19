@@ -426,32 +426,35 @@ def main():
 
                 
         elif page == "Profilo":
-            st.markdown("## 👤 Profilo utente")
-            st.markdown(f"**Username:** `{user}`")
+            if user not in users:
+                st.warning("⚠️ Dati utente non disponibili. Ricarica la pagina o contatta l’amministratore.")
+            else:
+                st.markdown("## 👤 Profilo utente")
+                st.markdown(f"**Username:** `{user}`")
         
-            email_corrente = users[user].get("email", "")
-            st.markdown("_Email attualmente registrata. Se desideri modificarla, riscrivila nel campo qui sotto._")
-            nuova_email = st.text_input("📧 Email", value=email_corrente)
-
-            st.markdown("### 🔐 Modifica password")
-            vecchia_pw = st.text_input("Vecchia password", type="password")
-            nuova_pw = st.text_input("Nuova password", type="password")
-            conferma_pw = st.text_input("Conferma nuova password", type="password")
+                email_corrente = users.get(user, {}).get("email", "")
+                st.markdown("_Email attualmente registrata. Se desideri modificarla, riscrivila nel campo qui sotto._")
+                nuova_email = st.text_input("📧 Email", value=email_corrente)
         
-            if st.button("💾 Salva modifiche al profilo"):
-                if vecchia_pw and vecchia_pw != users[user]["password"]:
-                    st.error("❌ Vecchia password errata.")
-                elif nuova_pw and nuova_pw != conferma_pw:
-                    st.warning("⚠️ Le nuove password non coincidono.")
-                elif not nuova_pw and nuova_email == email_corrente:
-                    st.info("ℹ️ Nessuna modifica rilevata.")
-                else:
-                    new_pw = nuova_pw if nuova_pw else None
-                    new_email = nuova_email if nuova_email != email_corrente else None
-                    update_user_info(service, users, user, new_password=new_pw, new_email=new_email)
-                    st.success("✅ Modifiche salvate con successo.")
-                    st.rerun()
-                    st.stop()
+                st.markdown("### 🔐 Modifica password")
+                vecchia_pw = st.text_input("Vecchia password", type="password")
+                nuova_pw = st.text_input("Nuova password", type="password")
+                conferma_pw = st.text_input("Conferma nuova password", type="password")
+        
+                if st.button("💾 Salva modifiche al profilo"):
+                    if vecchia_pw and vecchia_pw != users[user]["password"]:
+                        st.error("❌ Vecchia password errata.")
+                    elif nuova_pw and nuova_pw != conferma_pw:
+                        st.warning("⚠️ Le nuove password non coincidono.")
+                    elif not nuova_pw and nuova_email == email_corrente:
+                        st.info("ℹ️ Nessuna modifica rilevata.")
+                    else:
+                        new_pw = nuova_pw if nuova_pw else None
+                        new_email = nuova_email if nuova_email != email_corrente else None
+                        update_user_info(service, users, user, new_password=new_pw, new_email=new_email)
+                        st.success("✅ Modifiche salvate con successo.")
+                        st.rerun()
+                        st.stop()
 
 
 
