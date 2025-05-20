@@ -3,3 +3,4 @@ service_account.json
 log_visualizzazioni.csv
 temp_pdfs/
 __pycache__/
+.env
