@@ -1,4 +1,3 @@
-
 import os
 import io
 import json
@@ -120,7 +119,6 @@ def append_log_entry(service, user_email, file_uploaded):
 
 def log_visualizzazione(service, utente, file_pdf):
     from datetime import datetime
-    import pandas as pd
 
     log_name = "log_visualizzazioni.csv"
     query = f"'{FOLDER_ID}' in parents and name='{log_name}' and trashed=false"
@@ -132,17 +130,20 @@ def log_visualizzazione(service, utente, file_pdf):
     ora = now.strftime("%H:%M:%S")
     nuova_riga = f"{oggi},{ora},{utente},{file_pdf}\n"
 
-    log_csv = "data,ora,utente,file\n" + nuova_riga
+    # Se il file esiste, scarica e aggiorna
     if files:
         file_id = files[0]['id']
-        # Scarica il file esistente
         content = download_pdf(service, file_id, return_bytes=True).decode("utf-8")
-        log_csv = content + nuova_riga
-        # Elimina il vecchio file
-        service.files().delete(fileId=file_id).execute()
 
-    # Carica il file aggiornato
-    upload_pdf_to_drive(service, io.StringIO(log_csv), log_name, is_memory_file=True, overwrite=True)
+        # Aggiungi la riga solo se non già presente
+        if nuova_riga.strip() not in content:
+            log_csv = content + nuova_riga
+            upload_pdf_to_drive(service, io.StringIO(log_csv), log_name, is_memory_file=True, overwrite=True)
+    else:
+        # File assente: crealo
+        intestazione = "data,ora,utente,file\n"
+        contenuto = intestazione + nuova_riga
+        upload_pdf_to_drive(service, io.StringIO(contenuto), log_name, is_memory_file=True, overwrite=True)
 
 # === Gestione utenti ===
 
