@@ -49,9 +49,12 @@ def login():
 
     # Recupera lo username ricordato (se esiste)
     default_username = st.session_state.get("remembered_user", "")
-    username = st.text_input("👤 Nome utente", value=default_username, key="username_input")
+    username_input = st.text_input("👤 Nome utente", value=default_username, key="username_input")
+    username = username_input.strip()  # 🔧 Rimuove spazi indesiderati da inizio/fine
     password = st.text_input("🔑 Password", type="password", key="password_input")
     remember = st.checkbox("🔒 Ricordami su questo dispositivo")
+
+    st.caption("ℹ️ Se usi iPhone, verifica che non ci siano spazi extra nello username.")
 
     if st.button("Accedi"):
         service = get_drive_service()
