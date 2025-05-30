@@ -31,8 +31,8 @@ from drive_utils import (
     update_user_password,
     update_user_info,  
     delete_user,
-    write_users_file
-    log_visualizzazione
+    write_users_file,
+    log_visualizzazione  # ✅ AGGIUNGI QUESTA RIGA
 )
 
 if "logged_in" not in st.session_state:
