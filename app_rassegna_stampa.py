@@ -32,6 +32,7 @@ from drive_utils import (
     update_user_info,  
     delete_user,
     write_users_file
+     log_visualizzazione
 )
 
 if "logged_in" not in st.session_state:
