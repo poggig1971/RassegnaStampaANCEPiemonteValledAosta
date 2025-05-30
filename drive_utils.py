@@ -118,6 +118,32 @@ def append_log_entry(service, user_email, file_uploaded):
         fields='id'
     ).execute()
 
+def log_visualizzazione(service, utente, file_pdf):
+    from datetime import datetime
+    import pandas as pd
+
+    log_name = "log_visualizzazioni.csv"
+    query = f"'{FOLDER_ID}' in parents and name='{log_name}' and trashed=false"
+    result = service.files().list(q=query, fields="files(id, name)").execute()
+    files = result.get("files", [])
+
+    now = datetime.now()
+    oggi = now.strftime("%Y-%m-%d")
+    ora = now.strftime("%H:%M:%S")
+    nuova_riga = f"{oggi},{ora},{utente},{file_pdf}\n"
+
+    log_csv = "data,ora,utente,file\n" + nuova_riga
+    if files:
+        file_id = files[0]['id']
+        # Scarica il file esistente
+        content = download_pdf(service, file_id, return_bytes=True).decode("utf-8")
+        log_csv = content + nuova_riga
+        # Elimina il vecchio file
+        service.files().delete(fileId=file_id).execute()
+
+    # Carica il file aggiornato
+    upload_pdf_to_drive(service, io.StringIO(log_csv), log_name, is_memory_file=True, overwrite=True)
+
 # === Gestione utenti ===
 
 def read_users_file(service, filename="utenti.csv"):
