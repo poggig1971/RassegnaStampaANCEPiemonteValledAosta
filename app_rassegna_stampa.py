@@ -116,7 +116,9 @@ def dashboard():
         if file_id:
             content = download_pdf(service, file_id, return_bytes=True)
             st.download_button("📂 Scarica il PDF", data=BytesIO(content), file_name=selected_file)
+            log_visualizzazione(service, st.session_state.username, selected_file)
 
+        
         if st.session_state.username == "Admin":
             st.markdown("### 📄 Carica nuova rassegna")
             uploaded_files = st.file_uploader("Seleziona uno o più PDF", type="pdf", accept_multiple_files=True)
