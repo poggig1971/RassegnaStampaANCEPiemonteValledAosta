@@ -6,6 +6,8 @@ import streamlit as st
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload, MediaIoBaseUpload
+import pandas as pd
+from io import StringIO, BytesIO
 
 print("✅ drive_utils.py caricato correttamente (versione cloud)")
 
@@ -126,24 +128,29 @@ def log_visualizzazione(service, utente, file_pdf):
     files = result.get("files", [])
 
     now = datetime.now()
-    oggi = now.strftime("%Y-%m-%d")
-    ora = now.strftime("%H:%M:%S")
-    nuova_riga = f"{oggi},{ora},{utente},{file_pdf}\n"
+    nuova_riga = {
+        "data": now.strftime("%Y-%m-%d"),
+        "ora": now.strftime("%H:%M:%S"),
+        "utente": utente,
+        "file": file_pdf
+    }
 
-    # Se il file esiste, scarica e aggiorna
     if files:
-        file_id = files[0]['id']
+        file_id = files[0]["id"]
         content = download_pdf(service, file_id, return_bytes=True).decode("utf-8")
-
-        # Aggiungi la riga solo se non già presente
-        if nuova_riga.strip() not in content:
-            log_csv = content + nuova_riga
-            upload_pdf_to_drive(service, io.StringIO(log_csv), log_name, is_memory_file=True, overwrite=True)
+        try:
+            df = pd.read_csv(StringIO(content))
+        except Exception:
+            df = pd.DataFrame(columns=["data", "ora", "utente", "file"])
     else:
-        # File assente: crealo
-        intestazione = "data,ora,utente,file\n"
-        contenuto = intestazione + nuova_riga
-        upload_pdf_to_drive(service, io.StringIO(contenuto), log_name, is_memory_file=True, overwrite=True)
+        df = pd.DataFrame(columns=["data", "ora", "utente", "file"])
+
+    df = pd.concat([df, pd.DataFrame([nuova_riga])], ignore_index=True)
+
+    csv_buffer = StringIO()
+    df.to_csv(csv_buffer, index=False)
+    csv_data = csv_buffer.getvalue()
+    upload_pdf_to_drive(service, BytesIO(csv_data.encode("utf-8")), log_name, is_memory_file=True, overwrite=True)
 
 # === Gestione utenti ===
 
@@ -161,7 +168,6 @@ def read_users_file(service, filename="utenti.csv"):
         if len(parts) == 5:
             username, password, cambiata, data, email = parts
         else:
-            # per retrocompatibilità se manca l'email
             username, password, cambiata, data = parts
             email = ""
         users[username] = {
@@ -182,7 +188,6 @@ def write_users_file(service, users_dict, filename="utenti.csv"):
 
 def update_user_password(service, users_dict, username, new_password, filename="utenti.csv"):
     update_user_info(service, users_dict, username, new_password=new_password, filename=filename)
-
 
 def delete_user(service, users_dict, username, filename="utenti.csv"):
     if username in users_dict:
@@ -206,11 +211,8 @@ def update_user_info(service, users_dict, username, new_password=None, new_email
     user_data["data_modifica"] = datetime.date.today().isoformat()
     users_dict[username] = user_data
 
-    # Protezione: non scrivere se il dizionario è vuoto
     if not users_dict:
         st.error("❌ Errore: il file utenti risulterebbe vuoto. Operazione annullata.")
         return
 
     write_users_file(service, users_dict, filename)
-
-
