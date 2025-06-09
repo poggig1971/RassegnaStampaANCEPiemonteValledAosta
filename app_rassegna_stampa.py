@@ -242,10 +242,15 @@ def mostra_statistiche():
         df['data_ora'] = pd.to_datetime(df['data'] + ' ' + df['ora'])
         df['data'] = pd.to_datetime(df['data'])
 
-        utenti = df['utente'].unique().tolist()
-        utente_selezionato = st.selectbox("👤 Seleziona un utente", utenti)
+        utenti = sorted(df['utente'].unique().tolist())
+        opzioni = ["Tutti gli utenti"] + utenti
+        utente_selezionato = st.selectbox("👤 Seleziona un utente", opzioni)
 
-        df_u = df[df['utente'] == utente_selezionato]
+        if utente_selezionato == "Tutti gli utenti":
+            df_u = df
+        else:
+            df_u = df[df['utente'] == utente_selezionato]
+
 
         st.metric(f"📥 Totale accessi di {utente_selezionato}", len(df_u))
 
