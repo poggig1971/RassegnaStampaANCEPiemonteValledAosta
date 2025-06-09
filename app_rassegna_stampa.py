@@ -161,6 +161,14 @@ def mostra_statistiche_user():
 
         content = download_pdf(service, file_id, return_bytes=True).decode("utf-8")
         df = pd.read_csv(StringIO(content))
+
+        # ✅ Filtra i dati per l'utente loggato
+        df = df[df["utente"] == st.session_state.username]
+
+        if df.empty:
+            st.warning("⚠️ Nessuna visualizzazione registrata per il tuo utente.")
+            return
+
         df['data'] = pd.to_datetime(df['data'] + ' ' + df['ora'])
 
         st.metric("📥 Totale visualizzazioni", len(df))
