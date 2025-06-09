@@ -135,22 +135,33 @@ def log_visualizzazione(service, utente, file_pdf):
         "file": file_pdf
     }
 
+    df = pd.DataFrame(columns=["data", "ora", "utente", "file"])
     if files:
         file_id = files[0]["id"]
         content = download_pdf(service, file_id, return_bytes=True).decode("utf-8")
         try:
             df = pd.read_csv(StringIO(content))
         except Exception:
-            df = pd.DataFrame(columns=["data", "ora", "utente", "file"])
-    else:
-        df = pd.DataFrame(columns=["data", "ora", "utente", "file"])
+            pass  # In caso di CSV malformato, proseguiamo solo con la nuova riga
 
+    # Aggiunge la nuova riga in coda
     df = pd.concat([df, pd.DataFrame([nuova_riga])], ignore_index=True)
 
+    # Salvataggio CSV in memoria
     csv_buffer = StringIO()
     df.to_csv(csv_buffer, index=False)
     csv_data = csv_buffer.getvalue()
-    upload_pdf_to_drive(service, BytesIO(csv_data.encode("utf-8")), log_name, is_memory_file=True, overwrite=True)
+
+    # Carica prima il nuovo file
+    new_file = upload_pdf_to_drive(service, BytesIO(csv_data.encode("utf-8")), log_name, is_memory_file=True, overwrite=False)
+
+    # Poi cancella il vecchio file solo se l’upload è andato a buon fine
+    if files:
+        try:
+            service.files().delete(fileId=files[0]["id"]).execute()
+        except Exception as e:
+            st.warning("⚠️ Impossibile cancellare il vecchio file di log.")
+
 
 # === Gestione utenti ===
 
