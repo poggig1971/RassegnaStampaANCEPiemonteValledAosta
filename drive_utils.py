@@ -120,7 +120,9 @@ def append_log_entry(service, user_email, file_uploaded):
     ).execute()
 
 def log_visualizzazione(service, utente, file_pdf):
+    import pandas as pd
     from datetime import datetime
+    from io import StringIO, BytesIO
 
     log_name = "log_visualizzazioni.csv"
     query = f"'{FOLDER_ID}' in parents and name='{log_name}' and trashed=false"
@@ -135,25 +137,40 @@ def log_visualizzazione(service, utente, file_pdf):
         "file": file_pdf
     }
 
-    df = pd.DataFrame(columns=["data", "ora", "utente", "file"])
+    df_esistente = None
+
     if files:
         file_id = files[0]["id"]
         try:
-            content = download_pdf(service, file_id, return_bytes=True).decode("utf-8")
-            df = pd.read_csv(StringIO(content))
-        except Exception:
-            pass  # CSV malformato: ignora
+            content_bytes = download_pdf(service, file_id, return_bytes=True)
+            content_str = content_bytes.decode("utf-8")
+            df_esistente = pd.read_csv(StringIO(content_str))
+            st.info(f"✅ Log esistente caricato. Righe precedenti: {len(df_esistente)}")
+        except pd.errors.EmptyDataError:
+            st.warning(f"⚠️ Il file {log_name} è vuoto. Verrà ricreato.")
+            df_esistente = pd.DataFrame(columns=["data", "ora", "utente", "file"])
+        except Exception as e:
+            st.error(f"❌ Errore nella lettura del log {log_name}: {e}")
+            df_esistente = pd.DataFrame(columns=["data", "ora", "utente", "file"])
+    else:
+        st.info(f"📁 Il file {log_name} non esiste. Sarà creato.")
+        df_esistente = pd.DataFrame(columns=["data", "ora", "utente", "file"])
 
-    # Aggiunge la nuova riga
-    df = pd.concat([df, pd.DataFrame([nuova_riga])], ignore_index=True)
+    df_aggiornato = pd.concat([df_esistente, pd.DataFrame([nuova_riga])], ignore_index=True)
 
-    # Salvataggio CSV in memoria
+    # Scrivi il CSV aggiornato in memoria
     csv_buffer = StringIO()
-    df.to_csv(csv_buffer, index=False)
+    df_aggiornato.to_csv(csv_buffer, index=False)
     csv_data = csv_buffer.getvalue()
 
-    # Sovrascrive SEMPRE il file (sovrascrittura vera)
-    upload_pdf_to_drive(service, BytesIO(csv_data.encode("utf-8")), log_name, is_memory_file=True, overwrite=True)
+    # Salva in Drive sovrascrivendo
+    try:
+        upload_pdf_to_drive(service, BytesIO(csv_data.encode("utf-8")), log_name, is_memory_file=True, overwrite=True)
+        st.success(f"📌 Log aggiornato: {utente} ha visualizzato {file_pdf}.")
+    except Exception as e:
+        st.error("❌ Errore durante il salvataggio del file log.")
+        st.exception(e)
+
 
 
 
