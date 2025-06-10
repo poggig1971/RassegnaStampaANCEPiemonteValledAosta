@@ -239,3 +239,37 @@ def update_user_info(service, users_dict, username, new_password=None, new_email
         return
 
     write_users_file(service, users_dict, filename)
+
+def append_txt_log_entry(service, utente, azione_descrittiva, log_name="log_accessi.txt"):
+    from datetime import datetime
+
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    log_line = f"[{timestamp}] {utente} - {azione_descrittiva}\n"
+
+    # Cerca file esistente
+    query = f"'{FOLDER_ID}' in parents and name='{log_name}' and trashed=false"
+    result = service.files().list(q=query, fields="files(id, name)").execute()
+    files = result.get("files", [])
+
+    content = ""
+    if files:
+        try:
+            file_id = files[0]['id']
+            content_bytes = download_pdf(service, file_id, return_bytes=True)
+            content = content_bytes.decode("utf-8")
+            service.files().delete(fileId=file_id).execute()
+        except Exception as e:
+            st.warning(f"⚠️ Impossibile leggere il log .txt, sarà sovrascritto. Errore: {e}")
+
+    # Aggiungi nuova riga
+    updated_content = content + log_line
+    media = MediaIoBaseUpload(io.BytesIO(updated_content.encode("utf-8")), mimetype="text/plain")
+
+    service.files().create(
+        body={'name': log_name, 'parents': [FOLDER_ID]},
+        media_body=media,
+        fields='id'
+    ).execute()
+
+    st.info(f"📄 Log tecnico aggiornato: {azione_descrittiva}")
+
