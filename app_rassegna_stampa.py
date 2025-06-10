@@ -33,6 +33,7 @@ from drive_utils import (
     delete_user,
     write_users_file,
     log_visualizzazione  # ✅ AGGIUNGI QUESTA RIGA
+    append_txt_log_entry
 )
 
 if "logged_in" not in st.session_state:
