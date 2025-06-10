@@ -122,22 +122,18 @@ def dashboard():
             st.download_button("📂 Scarica il PDF", data=BytesIO(content), file_name=selected_file)
             log_visualizzazione(service, st.session_state.username, selected_file)
 
-        
         if st.session_state.username == "Admin":
             st.markdown("### 📄 Carica nuova rassegna")
             uploaded_files = st.file_uploader("Seleziona uno o più PDF", type="pdf", accept_multiple_files=True)
             if uploaded_files:
                 for uploaded_file in uploaded_files:
                     upload_pdf_to_drive(service, uploaded_file, uploaded_file.name, is_memory_file=True)
+                    append_txt_log_entry(service, st.session_state.username, f"ha caricato il file {uploaded_file.name}")
                     st.success(f"✅ Caricato: {uploaded_file.name}")
                 st.rerun()
                 st.stop()
 
-            st.markdown("### 🔎 Elimina file")
-            file_to_delete = st.selectbox(
-                "Seleziona file da eliminare",
-                file_names,
-                key=f"selectbox_elimina_{st.session_state.username}"
+    
             )
             if st.button("Elimina selezionato"):
                 file_id = next((file["id"] for file in files if file["name"] == file_to_delete), None)
