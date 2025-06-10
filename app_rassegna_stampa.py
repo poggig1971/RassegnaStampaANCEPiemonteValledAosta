@@ -186,7 +186,7 @@ def mostra_statistiche_user():
 
         df['fascia'] = df['ora'].apply(fascia_oraria)
         heatmap_data = df.groupby(['giorno_settimana', 'fascia']).size().unstack(fill_value=0)
-        giorni_ordine = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        giorni_ordine = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
         fasce_ordine = ['Notte', 'Mattino', 'Pomeriggio', 'Sera']
         heatmap_data = heatmap_data.reindex(giorni_ordine).reindex(columns=fasce_ordine)
 
