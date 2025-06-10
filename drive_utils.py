@@ -36,19 +36,22 @@ def upload_pdf_to_drive(service, file_obj, drive_filename, is_memory_file=False,
 
     if existing_files:
         if overwrite:
-            # Cancella tutti i duplicati (eccetto caso CSV log)
-            if drive_filename != "log_visualizzazioni.csv":
-                for f in existing_files:
-                    service.files().delete(fileId=f['id']).execute()
-            else:
-                # ⚠️ Se è log_visualizzazioni.csv, tieni solo uno e cancella gli altri
+            # Se il file è log_visualizzazioni.csv, tieni solo il primo e cancella gli altri
+            if drive_filename == "log_visualizzazioni.csv":
                 for f in existing_files[1:]:
                     service.files().delete(fileId=f['id']).execute()
+            else:
+                for f in existing_files:
+                    service.files().delete(fileId=f['id']).execute()
+            st.info(f"ℹ️ Il file '{drive_filename}' è stato sovrascritto.")
         else:
             st.warning(f"⚠️ Il file '{drive_filename}' è già presente su Google Drive. Upload annullato.")
             return existing_files[0]['id']
 
-    file_metadata = {'name': drive_filename, 'parents': [FOLDER_ID]}
+    file_metadata = {
+        'name': drive_filename,
+        'parents': [FOLDER_ID]
+    }
 
     if is_memory_file:
         if hasattr(file_obj, 'getvalue'):
@@ -64,6 +67,7 @@ def upload_pdf_to_drive(service, file_obj, drive_filename, is_memory_file=False,
 
     file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
     return file.get('id')
+
 
     if is_memory_file:
         if hasattr(file_obj, 'getvalue'):
