@@ -124,9 +124,12 @@ def log_visualizzazione(service, utente, file_pdf):
     import pandas as pd
     from datetime import datetime
     from io import StringIO, BytesIO
+    import pytz
 
     log_name = "log_visualizzazioni.csv"
-    now = datetime.now()
+    zona_italia = pytz.timezone("Europe/Rome")
+    now = datetime.now(zona_italia)
+    
     nuova_riga = {
         "data": now.strftime("%Y-%m-%d"),
         "ora": now.strftime("%H:%M:%S"),
