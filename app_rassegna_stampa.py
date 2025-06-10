@@ -32,9 +32,10 @@ from drive_utils import (
     update_user_info,  
     delete_user,
     write_users_file,
-    log_visualizzazione,  # ✅ aggiunta la virgola qui
+    log_visualizzazione,
     append_txt_log_entry
 )
+
 
 
 if "logged_in" not in st.session_state:
