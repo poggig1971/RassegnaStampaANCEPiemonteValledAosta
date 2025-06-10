@@ -136,13 +136,6 @@ def dashboard():
                 st.rerun()
                 st.stop()
 
-            if st.button("Elimina selezionato"):
-                file_id = next((file["id"] for file in files if file["name"] == file_to_delete), None)
-                if file_id:
-                    service.files().delete(fileId=file_id).execute()
-                    st.success(f"✅ File '{file_to_delete}' eliminato.")
-                    st.rerun()
-                    st.stop()
     except Exception as e:
         st.error(f"Errore durante il caricamento dei file: {e}")
 
