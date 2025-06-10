@@ -125,16 +125,51 @@ def log_visualizzazione(service, utente, file_pdf):
     from io import StringIO, BytesIO
 
     log_name = "log_visualizzazioni.csv"
-    query = f"'{FOLDER_ID}' in parents and name='{log_name}' and trashed=false"
-    result = service.files().list(q=query, fields="files(id, name)").execute()
-    files = result.get("files", [])
-
     now = datetime.now()
     nuova_riga = {
         "data": now.strftime("%Y-%m-%d"),
         "ora": now.strftime("%H:%M:%S"),
         "utente": utente,
         "file": file_pdf
+    }
+
+    try:
+        query = f"'{FOLDER_ID}' in parents and name='{log_name}' and trashed=false"
+        result = service.files().list(q=query, fields="files(id, name)").execute()
+        files = result.get("files", [])
+
+        if files:
+            file_id = files[0]["id"]
+            content_bytes = download_pdf(service, file_id, return_bytes=True)
+            content_str = content_bytes.decode("utf-8")
+            df_esistente = pd.read_csv(StringIO(content_str))
+        else:
+            df_esistente = pd.DataFrame(columns=["data", "ora", "utente", "file"])
+
+    except Exception as e:
+        st.warning("⚠️ Errore nella lettura del file CSV, verrà ricreato.")
+        df_esistente = pd.DataFrame(columns=["data", "ora", "utente", "file"])
+
+    # Aggiungi nuova riga e rimuovi eventuali duplicati
+    df_aggiornato = pd.concat([df_esistente, pd.DataFrame([nuova_riga])], ignore_index=True)
+    df_aggiornato.drop_duplicates(subset=["data", "ora", "utente", "file"], inplace=True)
+
+    try:
+        csv_buffer = StringIO()
+        df_aggiornato.to_csv(csv_buffer, index=False)
+        upload_pdf_to_drive(service, BytesIO(csv_buffer.getvalue().encode("utf-8")), log_name, is_memory_file=True, overwrite=True)
+        st.success(f"📌 Log visualizzazione aggiornato: {utente} ha consultato {file_pdf}.")
+    except Exception as e:
+        st.error("❌ Errore durante il salvataggio del file CSV.")
+        st.exception(e)
+
+    # 🔁 Log anche su file .txt tecnico
+    try:
+        append_txt_log_entry(service, utente, f"ha visualizzato il file {file_pdf}")
+    except Exception as e:
+        st.warning("⚠️ Impossibile scrivere nel log tecnico.")
+        st.exception(e)
+
     }
 
     df_esistente = None
