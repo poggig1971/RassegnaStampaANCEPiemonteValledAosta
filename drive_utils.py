@@ -249,9 +249,8 @@ def update_user_info(service, users_dict, username, new_password=None, new_email
     write_users_file(service, users_dict, filename)
 
 def append_txt_log_entry(service, utente, azione_descrittiva, log_name="log_accessi.txt"):
-    from datetime import datetime
-
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    import pytz
+    timestamp = datetime.now(pytz.timezone("Europe/Rome")).strftime("%Y-%m-%d %H:%M:%S")
     log_line = f"[{timestamp}] {utente} - {azione_descrittiva}\n"
 
     # Cerca TUTTI i file esistenti con quel nome
