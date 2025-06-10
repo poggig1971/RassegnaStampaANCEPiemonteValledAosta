@@ -241,7 +241,7 @@ def update_user_info(service, users_dict, username, new_password=None, new_email
     if new_email:
         user_data["email"] = new_email
 
-    user_data["data_modifica"] = datetime.date.today().isoformat()
+    user_data["data_modifica"] = date.today().isoformat()
     users_dict[username] = user_data
 
     if not users_dict:
