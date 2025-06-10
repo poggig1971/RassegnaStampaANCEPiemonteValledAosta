@@ -20,7 +20,6 @@ st.markdown("""
         <meta name="apple-mobile-web-app-capable" content="yes">
     </head>
 """, unsafe_allow_html=True)
-
 from drive_utils import (
     get_drive_service,
     upload_pdf_to_drive,
@@ -29,12 +28,13 @@ from drive_utils import (
     append_log_entry,
     read_users_file,
     update_user_password,
-    update_user_info,  
+    update_user_info,
     delete_user,
     write_users_file,
     log_visualizzazione,
     append_txt_log_entry
 )
+
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.username = ""
