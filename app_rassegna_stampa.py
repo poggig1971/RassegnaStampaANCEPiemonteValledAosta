@@ -35,9 +35,6 @@ from drive_utils import (
     log_visualizzazione,
     append_txt_log_entry
 )
-
-
-
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.username = ""
