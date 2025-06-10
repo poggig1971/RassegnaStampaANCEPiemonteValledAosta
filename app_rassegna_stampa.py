@@ -133,8 +133,6 @@ def dashboard():
                 st.rerun()
                 st.stop()
 
-    
-            )
             if st.button("Elimina selezionato"):
                 file_id = next((file["id"] for file in files if file["name"] == file_to_delete), None)
                 if file_id:
