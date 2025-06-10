@@ -36,20 +36,34 @@ def upload_pdf_to_drive(service, file_obj, drive_filename, is_memory_file=False,
 
     if existing_files:
         if overwrite:
-            # ✅ Evita la cancellazione se è log_visualizzazioni.csv
+            # Cancella tutti i duplicati (eccetto caso CSV log)
             if drive_filename != "log_visualizzazioni.csv":
                 for f in existing_files:
                     service.files().delete(fileId=f['id']).execute()
-            st.info(f"ℹ️ Il file '{drive_filename}' è stato sovrascritto.")
+            else:
+                # ⚠️ Se è log_visualizzazioni.csv, tieni solo uno e cancella gli altri
+                for f in existing_files[1:]:
+                    service.files().delete(fileId=f['id']).execute()
+        else:
+            st.warning(f"⚠️ Il file '{drive_filename}' è già presente su Google Drive. Upload annullato.")
+            return existing_files[0]['id']
+
+    file_metadata = {'name': drive_filename, 'parents': [FOLDER_ID]}
+
+    if is_memory_file:
+        if hasattr(file_obj, 'getvalue'):
+            content = file_obj.getvalue()
+            if isinstance(content, str):
+                file_obj = io.BytesIO(content.encode("utf-8"))
+            else:
+                file_obj = io.BytesIO(content)
+        mimetype = 'application/pdf' if drive_filename.endswith('.pdf') else 'text/csv'
+        media = MediaIoBaseUpload(file_obj, mimetype=mimetype)
     else:
-        st.warning(f"⚠️ Il file '{drive_filename}' è già presente su Google Drive. Upload annullato.")
-        return existing_files[0]['id']
+        media = MediaFileUpload(file_obj, mimetype='application/pdf')
 
-
-    file_metadata = {
-        'name': drive_filename,
-        'parents': [FOLDER_ID]
-    }
+    file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+    return file.get('id')
 
     if is_memory_file:
         if hasattr(file_obj, 'getvalue'):
