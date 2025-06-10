@@ -38,7 +38,8 @@ def upload_pdf_to_drive(service, file_obj, drive_filename, is_memory_file=False,
         if overwrite:
             for f in existing_files:
                 service.files().delete(fileId=f['id']).execute()
-            st.info(f"ℹ️ Il file '{drive_filename}' è stato sovrascritto.")
+            if not drive_filename.startswith("log_visualizzazioni"):
+                st.info(f"ℹ️ Il file '{drive_filename}' è stato sovrascritto.")
         else:
             st.warning(f"⚠️ Il file '{drive_filename}' è già presente su Google Drive. Upload annullato.")
             return existing_files[0]['id']
