@@ -254,17 +254,28 @@ def update_user_info(service, users_dict, username, new_password=None, new_email
 
 def append_txt_log_entry(service, utente, azione_descrittiva, log_name="log_accessi.txt"):
     import pytz
-    timestamp = datetime.now(pytz.timezone("Europe/Rome")).strftime("%Y-%m-%d %H:%M:%S")
-    log_line = f"[{timestamp}] {utente} - {azione_descrittiva}\n"
+    from datetime import datetime
+    zona_italia = pytz.timezone("Europe/Rome")
+    now = datetime.now(zona_italia)
+    data = now.strftime("%Y-%m-%d")
+    ora = now.strftime("%H:%M:%S")
 
-    # Cerca TUTTI i file esistenti con quel nome
+    # Estrai il nome del file, se presente nella descrizione
+    if "ha visualizzato il file" in azione_descrittiva:
+        file = azione_descrittiva.split("ha visualizzato il file")[-1].strip()
+    elif "ha caricato il file" in azione_descrittiva:
+        file = azione_descrittiva.split("ha caricato il file")[-1].strip()
+    else:
+        file = azione_descrittiva.strip()
+
+    log_line = f"{data};{ora};{utente};{file}\n"
+
+    # Recupera e unifica eventuali file esistenti
     query = f"'{FOLDER_ID}' in parents and name='{log_name}' and trashed=false"
     result = service.files().list(q=query, fields="files(id, name)").execute()
     files = result.get("files", [])
 
     content = ""
-
-    # Unisci contenuti esistenti e cancella tutti i file duplicati
     for f in files:
         try:
             file_id = f["id"]
@@ -272,19 +283,18 @@ def append_txt_log_entry(service, utente, azione_descrittiva, log_name="log_acce
             content += content_bytes.decode("utf-8")
             service.files().delete(fileId=file_id).execute()
         except Exception as e:
-            st.warning(f"⚠️ Problema con il file {log_name}. Verrà sovrascritto. Errore: {e}")
+            st.warning(f"⚠️ Errore con il file {log_name}. Verrà ricreato. Dettagli: {e}")
 
-    # Aggiungi nuova riga
     updated_content = content + log_line
     media = MediaIoBaseUpload(io.BytesIO(updated_content.encode("utf-8")), mimetype="text/plain")
 
-    # Crea un nuovo file unico
     service.files().create(
         body={'name': log_name, 'parents': [FOLDER_ID]},
         media_body=media,
         fields='id'
     ).execute()
 
-    st.info(f"📄 Log tecnico aggiornato: {azione_descrittiva}")
+    st.info(f"📄 Log tecnico aggiornato: {log_line.strip()}")
+
 
 
