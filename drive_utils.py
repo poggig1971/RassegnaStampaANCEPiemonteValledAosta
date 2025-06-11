@@ -68,22 +68,6 @@ def upload_pdf_to_drive(service, file_obj, drive_filename, is_memory_file=False,
     file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
     return file.get('id')
 
-
-    if is_memory_file:
-        if hasattr(file_obj, 'getvalue'):
-            content = file_obj.getvalue()
-            if isinstance(content, str):
-                file_obj = io.BytesIO(content.encode("utf-8"))
-            else:
-                file_obj = io.BytesIO(content)
-        mimetype = 'application/pdf' if drive_filename.endswith('.pdf') else 'text/csv'
-        media = MediaIoBaseUpload(file_obj, mimetype=mimetype)
-    else:
-        media = MediaFileUpload(file_obj, mimetype='application/pdf')
-
-    file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
-    return file.get('id')
-
 def list_pdfs_in_folder(service):
     query = f"'{FOLDER_ID}' in parents and mimeType='application/pdf' and trashed=false"
     results = service.files().list(q=query, fields="files(id, name)").execute()
