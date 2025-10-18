@@ -4,22 +4,44 @@ from datetime import datetime, date
 import pytz
 import pandas as pd
 from io import StringIO, BytesIO
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 # === CONFIGURAZIONE INIZIALE ===
-favicon = Image.open("favicon_ance.png")
+favicon = None
+try:
+    if os.path.exists("favicon_ance.png"):
+        favicon = Image.open("favicon_ance.png")
+except UnidentifiedImageError:
+    favicon = None
+
 st.set_page_config(
     page_title="Rassegna ANCE Piemonte",
-    page_icon=favicon,
+    page_icon=favicon if favicon else "📄",
     layout="centered"
 )
 
+# ✅ COMPATIBILITÀ SAFARI E IOS
+# - Rimosso <head> dinamico (Safari lo blocca)
+# - Forzato background visibile e opacità
+# - Aggiunti meta tag per web app Apple
+# - Mantiene link alla app-icon GitHub
 st.markdown("""
-    <head>
-        <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/poggig1971/RassegnaStampaANCEPiemonteValledAosta/main/public/app-icon.png">
-        <meta name="apple-mobile-web-app-capable" content="yes">
-    </head>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/poggig1971/RassegnaStampaANCEPiemonteValledAosta/main/public/app-icon.png">
+
+<style>
+html, body, [class*="stApp"] {
+    background-color: #ffffff !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    min-height: 100vh !important;
+}
+</style>
 """, unsafe_allow_html=True)
+
+# (Da qui in avanti il resto del tuo codice)
 from drive_utils import (
     get_drive_service,
     upload_pdf_to_drive,
@@ -34,6 +56,10 @@ from drive_utils import (
     log_visualizzazione,
     append_txt_log_entry
 )
+
+
+
+
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
