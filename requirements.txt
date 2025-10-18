@@ -1,5 +1,5 @@
 streamlit==1.38.0
-google-auth==2.22.0
+google-auth==2.33.0
 google-auth-oauthlib==1.2.0
 google-api-python-client==2.104.0
 pytz==2023.3
