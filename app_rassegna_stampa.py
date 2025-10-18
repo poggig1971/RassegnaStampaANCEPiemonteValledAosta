@@ -14,12 +14,24 @@ st.set_page_config(
     layout="centered"
 )
 
+# ✅ Compatibilità totale Safari / iOS / macOS
 st.markdown("""
-    <head>
-        <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/poggig1971/RassegnaStampaANCEPiemonteValledAosta/main/public/app-icon.png">
-        <meta name="apple-mobile-web-app-capable" content="yes">
-    </head>
+<link rel="apple-touch-icon" sizes="180x180"
+      href="https://raw.githubusercontent.com/poggig1971/RassegnaStampaANCEPiemonteValledAosta/main/public/app-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+<style>
+/* Forza Safari a mostrare il contenuto */
+html, body, [class*="stApp"] {
+    background-color: #ffffff !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    min-height: 100vh !important;
+}
+</style>
 """, unsafe_allow_html=True)
+
 from drive_utils import (
     get_drive_service,
     upload_pdf_to_drive,
