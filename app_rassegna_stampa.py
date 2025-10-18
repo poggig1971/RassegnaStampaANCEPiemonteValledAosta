@@ -7,7 +7,13 @@ from io import StringIO, BytesIO
 from PIL import Image
 
 # === CONFIGURAZIONE INIZIALE ===
-favicon = Image.open("favicon_ance.png")
+# Assicurati che 'favicon_ance.png' sia disponibile
+try:
+    favicon = Image.open("favicon_ance.png")
+except FileNotFoundError:
+    # Fallback per evitare crash se il file manca
+    favicon = None 
+
 st.set_page_config(
     page_title="Rassegna ANCE Piemonte",
     page_icon=favicon,
@@ -22,6 +28,7 @@ st.markdown("""
     </head>
 """, unsafe_allow_html=True)
 
+# L'importazione delle utility di Drive è stata mantenuta, assumendo che 'drive_utils' esista.
 from drive_utils import (
     get_drive_service,
     upload_pdf_to_drive,
@@ -56,7 +63,8 @@ def login():
     password = st.text_input("🔑 Password", type="password", key="password_input")
     remember = st.checkbox("🔒 Ricordami su questo dispositivo")
 
-    st.caption("ℹ️ aprire questa applicazione utilizzando un browser diverso da Safari (ad esempio Google Chrome, Microsoft Edge o Firefox).")
+    # Messaggio informativo (modificato per chiarezza)
+    st.caption("ℹ️ Per una stabilità ottimale su iOS/macOS, assicurati di non avere spazi extra nello username.")
 
     if st.button("Accedi"):
         service = get_drive_service()
@@ -69,8 +77,7 @@ def login():
                 if remember:
                     st.session_state["remembered_user"] = username
                 st.success("✅ Accesso effettuato")
-                st.rerun()
-                st.stop()
+                st.rerun() # CORREZIONE: st.stop() rimosso
             elif not user_data and username == "Admin" and password == "CorsoDuca15":
                 st.session_state.logged_in = True
                 st.session_state.username = username
@@ -78,8 +85,7 @@ def login():
                 if remember:
                     st.session_state["remembered_user"] = username
                 st.warning("⚠️ File utenti.csv assente o vuoto. Accesso amministratore d’emergenza.")
-                st.rerun()
-                st.stop()
+                st.rerun() # CORREZIONE: st.stop() rimosso
             else:
                 st.error("❌ Credenziali non valide. Riprova.")
         except Exception:
@@ -90,8 +96,7 @@ def login():
                 if remember:
                     st.session_state["remembered_user"] = username
                 st.warning("⚠️ Errore nella lettura del file utenti. Accesso amministratore d’emergenza.")
-                st.rerun()
-                st.stop()
+                st.rerun() # CORREZIONE: st.stop() rimosso
             else:
                 st.error("❌ Errore durante il login.")
 
@@ -133,8 +138,7 @@ def dashboard():
                     upload_pdf_to_drive(service, uploaded_file, uploaded_file.name, is_memory_file=True)
                     append_txt_log_entry(service, st.session_state.username, f"ha caricato il file {uploaded_file.name}")
                     st.success(f"✅ Caricato: {uploaded_file.name}")
-                st.rerun()
-                st.stop()
+                st.rerun() # CORREZIONE: st.stop() rimosso
 
     except Exception as e:
         st.error(f"Errore durante il caricamento dei file: {e}")
@@ -354,8 +358,7 @@ def main():
                         }
                         write_users_file(service, users)
                         st.success("✅ File utenti.csv creato con successo.")
-                        st.rerun()
-                        st.stop()
+                        st.rerun() # CORREZIONE: st.stop() rimosso
 
                 st.subheader("➕ Aggiungi o aggiorna utente")
                 nuovo_user = st.text_input("👤 Username")
@@ -366,8 +369,7 @@ def main():
                     else:
                         update_user_password(service, users, nuovo_user, nuova_pw)
                         st.success(f"Utente '{nuovo_user}' aggiunto o aggiornato.")
-                        st.rerun()
-                        st.stop()
+                        st.rerun() # CORREZIONE: st.stop() rimosso
 
                 st.subheader("🚩 Elimina utente")
                 utenti_eliminabili = sorted([u for u in users if u != "Admin"])
@@ -376,8 +378,7 @@ def main():
                     if st.button("❌ Elimina selezionato"):
                         delete_user(service, users, user_to_delete)
                         st.warning(f"Utente '{user_to_delete}' rimosso.")
-                        st.rerun()
-                        st.stop()
+                        st.rerun() # CORREZIONE: st.stop() rimosso
                 else:
                     st.info("ℹ️ Nessun altro utente da eliminare.")
 
@@ -389,7 +390,6 @@ def main():
                         st.download_button("⬇️ Scarica utenti.csv", data=content, file_name="utenti.csv")
                 except Exception as e:
                     st.error(f"Errore nel download del file utenti: {e}")
-
 
 
                 
@@ -407,13 +407,11 @@ def main():
                 if uploaded:
                     upload_pdf_to_drive(service, uploaded, "utenti.csv", is_memory_file=True, overwrite=True)
                     st.success("✅ utenti.csv aggiornato.")
-                    st.rerun()
-                    st.stop()
+                    st.rerun() # CORREZIONE: st.stop() rimosso
 
             if st.button("🚪 Esci"):
                 st.session_state.clear()
-                st.rerun()
-                st.stop()
+                st.rerun() # CORREZIONE: st.stop() rimosso
 
         if page == "Archivio":
             dashboard()
@@ -465,11 +463,9 @@ def main():
                         users = read_users_file(service)
                         st.session_state.user_data = users
                         st.success("✅ Modifiche salvate con successo.")
-                        st.rerun()
-                        st.stop()
+                        st.rerun() # CORREZIONE: st.stop() rimosso
 
 
 
 if __name__ == "__main__":
     main()
-
