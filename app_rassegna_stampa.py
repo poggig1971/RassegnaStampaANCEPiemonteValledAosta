@@ -22,13 +22,6 @@ st.markdown("""
     </head>
 """, unsafe_allow_html=True)
 
-# st.markdown("""
-#     <head>
-#         <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/poggig1971/RassegnaStampaANCEPiemonteValledAosta/main/public/app-icon.png">
-#         <meta name="apple-mobile-web-app-capable" content="yes">
-#     </head>
-# """, unsafe_allow_html=True)
-
 from drive_utils import (
     get_drive_service,
     upload_pdf_to_drive,
@@ -63,7 +56,7 @@ def login():
     password = st.text_input("🔑 Password", type="password", key="password_input")
     remember = st.checkbox("🔒 Ricordami su questo dispositivo")
 
-    st.caption("ℹ️ Se usi iPhone, verifica che non ci siano spazi extra nello username.")
+    st.caption("ℹ️ aprire questa applicazione utilizzando un browser diverso da Safari (ad esempio Google Chrome, Microsoft Edge o Firefox).")
 
     if st.button("Accedi"):
         service = get_drive_service()
