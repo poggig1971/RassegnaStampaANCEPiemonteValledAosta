@@ -17,10 +17,18 @@ st.set_page_config(
 # ✅ Compatibilità totale Safari / iOS / macOS
 st.markdown("""
     <head>
-        <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/poggig1971/RassegnaStampaANCEPiemonteValledAosta/main/public/app-icon.png">
+        <link rel="apple-touch-icon" sizes="180x180" 
+              href="https://raw.githubusercontent.com/poggig1971/RassegnaStampaANCEPiemonteValledAosta/main/public/app-icon.png">
         <meta name="apple-mobile-web-app-capable" content="yes">
     </head>
 """, unsafe_allow_html=True)
+
+# st.markdown("""
+#     <head>
+#         <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/poggig1971/RassegnaStampaANCEPiemonteValledAosta/main/public/app-icon.png">
+#         <meta name="apple-mobile-web-app-capable" content="yes">
+#     </head>
+# """, unsafe_allow_html=True)
 
 from drive_utils import (
     get_drive_service,
